@@ -1,0 +1,886 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		053EF7D8B817A2083555FB24 /* ApplicationWindowControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B769776BE2097B765F63707 /* ApplicationWindowControllerTests.swift */; };
+		0938E2697DFBEF2F49C99F06 /* VirtualDisplayGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8FA876A09D87402C486D9EE /* VirtualDisplayGate.swift */; };
+		15E9064EFC340D4CCC4D87B2 /* NativeWebRTCClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818DD37F050AC13E7DF932FE /* NativeWebRTCClient.swift */; };
+		169C556C0BE097E580008E5B /* ControlEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CBF4CDF30959E5385826CB /* ControlEnvelope.swift */; };
+		21E1FB36006C8E88D79DA3B8 /* WorkspaceState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72E47ED72A94EF91E46C3AB2 /* WorkspaceState.swift */; };
+		2DDAF402FF7B95234FC000A5 /* PermissionCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE09918AB29BF56571FA0147 /* PermissionCenter.swift */; };
+		341C571A35737E2C4162A559 /* MACLandControlClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3775F0B164E1E2AB44852544 /* MACLandControlClient.swift */; };
+		35AA1BC2965EAFED776369B9 /* VoidDisplayWebRTC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D242BE63373307C370A8CA0 /* VoidDisplayWebRTC.swift */; };
+		374AAF552053FDD1CF3A4B49 /* Payloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3917C7824A8BAC2DD198E9 /* Payloads.swift */; };
+		42988E819AF29B246805A08F /* VoidDisplayScreenCaptureSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDA260D2CB8C312CD741BD8 /* VoidDisplayScreenCaptureSession.swift */; };
+		48D33D16D6C7494719C591B6 /* VoidDisplayCaptureTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C724BB9B0FBE4DB5B97ED524 /* VoidDisplayCaptureTypes.swift */; };
+		4A72E1DB8D1DE20B6AB47123 /* ApplicationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FCB4AC41381D64AB17B925 /* ApplicationWindowController.swift */; };
+		4B826D9962FBE2C875C16E3C /* VoidDisplayMediaCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3E23AAF94449B71645D2C6 /* VoidDisplayMediaCoordinator.swift */; };
+		540C9CD9BD9D2F163FE36E65 /* RemoteDisplayProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCC2CE2652C09E618DA72CB /* RemoteDisplayProviderTests.swift */; };
+		62D6A8718428C19C0C2DCF8F /* NativeWebRTCSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0C362AA88DE87BFB89CF77 /* NativeWebRTCSurface.swift */; };
+		66993E4E981E0721BEC33194 /* MACLandVoidDisplayBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42100D61BE386FF82F86A849 /* MACLandVoidDisplayBridge.m */; };
+		67C32F79302744B4AAEA444B /* ProtocolVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6CED1DD3C3A334C4014A537 /* ProtocolVersion.swift */; };
+		6E4C1F237B2B4D79440C0C1C /* LaunchAtLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78D340370DE58F5A3D9C3F07 /* LaunchAtLoginController.swift */; };
+		74A81E708647B62178070D35 /* VoidDisplayCapturePermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D75F607B7A7EAA21CE85E8 /* VoidDisplayCapturePermission.swift */; };
+		7F5B0672EF99CAB230E95355 /* MACLandDesktopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A564255B1E77EF12520B8AC /* MACLandDesktopView.swift */; };
+		88FD1FC006EFFFE0CB3CB611 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 6C3CD22CABD2675A4BE9C5D6 /* WebRTC */; };
+		8FCDE4973E6C80519C46D707 /* ApplicationCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42E1CE9901B4419FFFCA49B /* ApplicationCatalog.swift */; };
+		954785B8279A5454A35ADA7D /* Payloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D3917C7824A8BAC2DD198E9 /* Payloads.swift */; };
+		9E5FCA6EEBFC69C551B2F271 /* ProtocolVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6CED1DD3C3A334C4014A537 /* ProtocolVersion.swift */; };
+		A4C5A36AF12F63C9E788F079 /* MACLandHostApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6545B2A84973E60C3B3EA5 /* MACLandHostApp.swift */; };
+		A7E24F9E02B02BE0D31DBF0C /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 3CA51C2E8824AD1F17F786ED /* WebRTC */; };
+		AB0B855E509634F17460273D /* PackageProtocolCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2433E9CD4F787DB7AE3F283 /* PackageProtocolCompatibility.swift */; };
+		ABA492361AB5325477ECCBEB /* HostCommandRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF8E2B6CDA58A261605B9749 /* HostCommandRouter.swift */; };
+		BA3F6FF706BE97C950B3BBCB /* ControlEnvelope.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CBF4CDF30959E5385826CB /* ControlEnvelope.swift */; };
+		C0AFA55845314679CF7E4083 /* VoidDisplayDriverAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E29AB07EECB5ACC230C6FE86 /* VoidDisplayDriverAdapter.swift */; };
+		C692E9C25F4B9FD46FCEA216 /* MACLandHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC81DE846282CEF3B1FF6AE /* MACLandHomeView.swift */; };
+		C6BB3149FDF88BB0847B6CD4 /* WorkspaceStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35DDBF29F04F349D9D68E78F /* WorkspaceStateTests.swift */; };
+		D9C6402EC329744A22B19A18 /* VoidDisplayExtractedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA2B374EF6AD6CA8A796A2F /* VoidDisplayExtractedTests.swift */; };
+		DB19CD381F9268A0ED626699 /* WindowPlacementController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1612881A69093FD0968ED152 /* WindowPlacementController.swift */; };
+		DBDE04C62449A2D9E8F47C04 /* BetterDisplayDriverAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39BE75EF795372ABA0A23A3D /* BetterDisplayDriverAdapter.swift */; };
+		E4193FBC965ED6FA4EA61E46 /* CoordinateMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32864011DDE02DA896A7ED75 /* CoordinateMapping.swift */; };
+		E47CF6C9ACE1A66F10227DF0 /* MACLandMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E01E6FFA605931EAEFC4AF5 /* MACLandMobileApp.swift */; };
+		E5D35FFF24C119AF8A01B325 /* LocalControlListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCE86CD99A83A68DBAF74BD /* LocalControlListener.swift */; };
+		E6C13E3DB90BFBF265AAB4A5 /* TLSIdentityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A2BEB301F49A291CC7066DB /* TLSIdentityStore.swift */; };
+		F370C27C727C7BB741AC3E8C /* RemoteDisplayProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7D8BB2253247DF718C91CB /* RemoteDisplayProvider.swift */; };
+		F6AC037212A2E28F9FD8F8C5 /* CoordinateMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94C4C40FD6BB1795217D450 /* CoordinateMappingTests.swift */; };
+		F7B95A1074A67B1762A385C4 /* HostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC049664F6B908AA872DB827 /* HostTests.swift */; };
+		F93C003DA6D5FA427472F4D1 /* HostRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610B05BC854563F0C00ECD3C /* HostRuntime.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6E171AC5F88704DB63BD328C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 72B7C566ED70E6C2FACF5D93 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CE045F9F53A7627A3ED38E92;
+			remoteInfo = MACLandHost;
+		};
+		7195AF68FBB1CD268A1275F8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 72B7C566ED70E6C2FACF5D93 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 61FE503E34D920C605CE9597;
+			remoteInfo = MACLandMobile;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0A1A2003B5F522DA1FA41299 /* MACLandHostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MACLandHostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1130CA875D65D8B3B3A105A5 /* MACLandHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MACLandHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1612881A69093FD0968ED152 /* WindowPlacementController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPlacementController.swift; sourceTree = "<group>"; };
+		1C7D8BB2253247DF718C91CB /* RemoteDisplayProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteDisplayProvider.swift; sourceTree = "<group>"; };
+		2A564255B1E77EF12520B8AC /* MACLandDesktopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACLandDesktopView.swift; sourceTree = "<group>"; };
+		2B6545B2A84973E60C3B3EA5 /* MACLandHostApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACLandHostApp.swift; sourceTree = "<group>"; };
+		2D242BE63373307C370A8CA0 /* VoidDisplayWebRTC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidDisplayWebRTC.swift; sourceTree = "<group>"; };
+		2E01E6FFA605931EAEFC4AF5 /* MACLandMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACLandMobileApp.swift; sourceTree = "<group>"; };
+		32864011DDE02DA896A7ED75 /* CoordinateMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinateMapping.swift; sourceTree = "<group>"; };
+		35DDBF29F04F349D9D68E78F /* WorkspaceStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceStateTests.swift; sourceTree = "<group>"; };
+		3775F0B164E1E2AB44852544 /* MACLandControlClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACLandControlClient.swift; sourceTree = "<group>"; };
+		39BE75EF795372ABA0A23A3D /* BetterDisplayDriverAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetterDisplayDriverAdapter.swift; sourceTree = "<group>"; };
+		42100D61BE386FF82F86A849 /* MACLandVoidDisplayBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MACLandVoidDisplayBridge.m; sourceTree = "<group>"; };
+		52D75F607B7A7EAA21CE85E8 /* VoidDisplayCapturePermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidDisplayCapturePermission.swift; sourceTree = "<group>"; };
+		5B769776BE2097B765F63707 /* ApplicationWindowControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationWindowControllerTests.swift; sourceTree = "<group>"; };
+		5F4BB4C65C66B5C47C7328D0 /* CGVirtualDisplayPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CGVirtualDisplayPrivate.h; sourceTree = "<group>"; };
+		610B05BC854563F0C00ECD3C /* HostRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostRuntime.swift; sourceTree = "<group>"; };
+		6A2BEB301F49A291CC7066DB /* TLSIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TLSIdentityStore.swift; sourceTree = "<group>"; };
+		6C55610B39AA0F14AB930078 /* MACLandMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MACLandMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		72E47ED72A94EF91E46C3AB2 /* WorkspaceState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceState.swift; sourceTree = "<group>"; };
+		78D340370DE58F5A3D9C3F07 /* LaunchAtLoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginController.swift; sourceTree = "<group>"; };
+		818DD37F050AC13E7DF932FE /* NativeWebRTCClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeWebRTCClient.swift; sourceTree = "<group>"; };
+		8D3917C7824A8BAC2DD198E9 /* Payloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Payloads.swift; sourceTree = "<group>"; };
+		8DDA260D2CB8C312CD741BD8 /* VoidDisplayScreenCaptureSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidDisplayScreenCaptureSession.swift; sourceTree = "<group>"; };
+		95126833693B7CE62906FF8A /* MACLandMobileTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MACLandMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC049664F6B908AA872DB827 /* HostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostTests.swift; sourceTree = "<group>"; };
+		ACCE86CD99A83A68DBAF74BD /* LocalControlListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalControlListener.swift; sourceTree = "<group>"; };
+		B8FA876A09D87402C486D9EE /* VirtualDisplayGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VirtualDisplayGate.swift; sourceTree = "<group>"; };
+		BF8E2B6CDA58A261605B9749 /* HostCommandRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCommandRouter.swift; sourceTree = "<group>"; };
+		C2433E9CD4F787DB7AE3F283 /* PackageProtocolCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageProtocolCompatibility.swift; sourceTree = "<group>"; };
+		C260AAEE6E29929ED5FA4BD5 /* MACLandVoidDisplayBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MACLandVoidDisplayBridge.h; sourceTree = "<group>"; };
+		C3CBF4CDF30959E5385826CB /* ControlEnvelope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlEnvelope.swift; sourceTree = "<group>"; };
+		C6CED1DD3C3A334C4014A537 /* ProtocolVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolVersion.swift; sourceTree = "<group>"; };
+		C724BB9B0FBE4DB5B97ED524 /* VoidDisplayCaptureTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidDisplayCaptureTypes.swift; sourceTree = "<group>"; };
+		DBA2B374EF6AD6CA8A796A2F /* VoidDisplayExtractedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidDisplayExtractedTests.swift; sourceTree = "<group>"; };
+		DBCC2CE2652C09E618DA72CB /* RemoteDisplayProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteDisplayProviderTests.swift; sourceTree = "<group>"; };
+		DD0C362AA88DE87BFB89CF77 /* NativeWebRTCSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeWebRTCSurface.swift; sourceTree = "<group>"; };
+		DE3E23AAF94449B71645D2C6 /* VoidDisplayMediaCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidDisplayMediaCoordinator.swift; sourceTree = "<group>"; };
+		E29AB07EECB5ACC230C6FE86 /* VoidDisplayDriverAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoidDisplayDriverAdapter.swift; sourceTree = "<group>"; };
+		E42E1CE9901B4419FFFCA49B /* ApplicationCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationCatalog.swift; sourceTree = "<group>"; };
+		E94C4C40FD6BB1795217D450 /* CoordinateMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinateMappingTests.swift; sourceTree = "<group>"; };
+		EE09918AB29BF56571FA0147 /* PermissionCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCenter.swift; sourceTree = "<group>"; };
+		F2FCB4AC41381D64AB17B925 /* ApplicationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationWindowController.swift; sourceTree = "<group>"; };
+		FAC81DE846282CEF3B1FF6AE /* MACLandHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACLandHomeView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D3B076D1F621AA7AEA15721 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				88FD1FC006EFFFE0CB3CB611 /* WebRTC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8F87FC940C644F171142D5AD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A7E24F9E02B02BE0D31DBF0C /* WebRTC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		05C7C2CC71ED9B23B55BE045 /* MACLandProtocol */ = {
+			isa = PBXGroup;
+			children = (
+				7DB0A1829D8E254D82638738 /* Sources */,
+			);
+			path = MACLandProtocol;
+			sourceTree = "<group>";
+		};
+		0D1D9439EF4A455CCDD0997F /* VoidDisplayExtracted */ = {
+			isa = PBXGroup;
+			children = (
+				52D75F607B7A7EAA21CE85E8 /* VoidDisplayCapturePermission.swift */,
+				C724BB9B0FBE4DB5B97ED524 /* VoidDisplayCaptureTypes.swift */,
+				DE3E23AAF94449B71645D2C6 /* VoidDisplayMediaCoordinator.swift */,
+				8DDA260D2CB8C312CD741BD8 /* VoidDisplayScreenCaptureSession.swift */,
+				2D242BE63373307C370A8CA0 /* VoidDisplayWebRTC.swift */,
+			);
+			path = VoidDisplayExtracted;
+			sourceTree = "<group>";
+		};
+		2FE53BB9BF6C2A4A7C191832 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				69566162E55CB2395FFDD2AD /* MACLandMobile */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+		311C200B09438F65E1F89D16 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				EDFB7F3682F471C6160449B0 /* MACLandMobileTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		40FBBF18E26465F910EA8020 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F962A291A775378446CF248C /* MACLandHost */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5855AAB08E819799CE6BBD37 /* MACLandProtocol */ = {
+			isa = PBXGroup;
+			children = (
+				C3CBF4CDF30959E5385826CB /* ControlEnvelope.swift */,
+				8D3917C7824A8BAC2DD198E9 /* Payloads.swift */,
+				C6CED1DD3C3A334C4014A537 /* ProtocolVersion.swift */,
+			);
+			path = MACLandProtocol;
+			sourceTree = "<group>";
+		};
+		59BB916FAC50C39BA7856734 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				D8E9527A69D1A43F466BD225 /* MACLandHostTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		69566162E55CB2395FFDD2AD /* MACLandMobile */ = {
+			isa = PBXGroup;
+			children = (
+				CEE613C231E30C62034A56CA /* Sources */,
+				311C200B09438F65E1F89D16 /* Tests */,
+			);
+			path = MACLandMobile;
+			sourceTree = "<group>";
+		};
+		70A80C66F984721682918F80 /* MACLandMobile */ = {
+			isa = PBXGroup;
+			children = (
+				32864011DDE02DA896A7ED75 /* CoordinateMapping.swift */,
+				3775F0B164E1E2AB44852544 /* MACLandControlClient.swift */,
+				2A564255B1E77EF12520B8AC /* MACLandDesktopView.swift */,
+				FAC81DE846282CEF3B1FF6AE /* MACLandHomeView.swift */,
+				2E01E6FFA605931EAEFC4AF5 /* MACLandMobileApp.swift */,
+				818DD37F050AC13E7DF932FE /* NativeWebRTCClient.swift */,
+				DD0C362AA88DE87BFB89CF77 /* NativeWebRTCSurface.swift */,
+				C2433E9CD4F787DB7AE3F283 /* PackageProtocolCompatibility.swift */,
+				72E47ED72A94EF91E46C3AB2 /* WorkspaceState.swift */,
+			);
+			path = MACLandMobile;
+			sourceTree = "<group>";
+		};
+		7DB0A1829D8E254D82638738 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				5855AAB08E819799CE6BBD37 /* MACLandProtocol */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		AA8B4D90F7295279EEF2B84A /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				05C7C2CC71ED9B23B55BE045 /* MACLandProtocol */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		BD9DC7E33674C38C35710DE3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1130CA875D65D8B3B3A105A5 /* MACLandHost.app */,
+				0A1A2003B5F522DA1FA41299 /* MACLandHostTests.xctest */,
+				6C55610B39AA0F14AB930078 /* MACLandMobile.app */,
+				95126833693B7CE62906FF8A /* MACLandMobileTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BEF7795EB8056DC329F35244 /* MacHost */ = {
+			isa = PBXGroup;
+			children = (
+				40FBBF18E26465F910EA8020 /* Sources */,
+				59BB916FAC50C39BA7856734 /* Tests */,
+			);
+			path = MacHost;
+			sourceTree = "<group>";
+		};
+		CEE613C231E30C62034A56CA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				70A80C66F984721682918F80 /* MACLandMobile */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		D072367B4C51CE028B9D816D = {
+			isa = PBXGroup;
+			children = (
+				2FE53BB9BF6C2A4A7C191832 /* iOS */,
+				BEF7795EB8056DC329F35244 /* MacHost */,
+				AA8B4D90F7295279EEF2B84A /* Shared */,
+				BD9DC7E33674C38C35710DE3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D8E9527A69D1A43F466BD225 /* MACLandHostTests */ = {
+			isa = PBXGroup;
+			children = (
+				5B769776BE2097B765F63707 /* ApplicationWindowControllerTests.swift */,
+				AC049664F6B908AA872DB827 /* HostTests.swift */,
+				DBCC2CE2652C09E618DA72CB /* RemoteDisplayProviderTests.swift */,
+				DBA2B374EF6AD6CA8A796A2F /* VoidDisplayExtractedTests.swift */,
+			);
+			path = MACLandHostTests;
+			sourceTree = "<group>";
+		};
+		E75F9B549FFD80564EC4C1AE /* VoidDisplayPrivate */ = {
+			isa = PBXGroup;
+			children = (
+				5F4BB4C65C66B5C47C7328D0 /* CGVirtualDisplayPrivate.h */,
+				C260AAEE6E29929ED5FA4BD5 /* MACLandVoidDisplayBridge.h */,
+				42100D61BE386FF82F86A849 /* MACLandVoidDisplayBridge.m */,
+			);
+			path = VoidDisplayPrivate;
+			sourceTree = "<group>";
+		};
+		EDFB7F3682F471C6160449B0 /* MACLandMobileTests */ = {
+			isa = PBXGroup;
+			children = (
+				E94C4C40FD6BB1795217D450 /* CoordinateMappingTests.swift */,
+				35DDBF29F04F349D9D68E78F /* WorkspaceStateTests.swift */,
+			);
+			path = MACLandMobileTests;
+			sourceTree = "<group>";
+		};
+		F962A291A775378446CF248C /* MACLandHost */ = {
+			isa = PBXGroup;
+			children = (
+				0D1D9439EF4A455CCDD0997F /* VoidDisplayExtracted */,
+				E75F9B549FFD80564EC4C1AE /* VoidDisplayPrivate */,
+				E42E1CE9901B4419FFFCA49B /* ApplicationCatalog.swift */,
+				F2FCB4AC41381D64AB17B925 /* ApplicationWindowController.swift */,
+				39BE75EF795372ABA0A23A3D /* BetterDisplayDriverAdapter.swift */,
+				BF8E2B6CDA58A261605B9749 /* HostCommandRouter.swift */,
+				610B05BC854563F0C00ECD3C /* HostRuntime.swift */,
+				78D340370DE58F5A3D9C3F07 /* LaunchAtLoginController.swift */,
+				ACCE86CD99A83A68DBAF74BD /* LocalControlListener.swift */,
+				2B6545B2A84973E60C3B3EA5 /* MACLandHostApp.swift */,
+				EE09918AB29BF56571FA0147 /* PermissionCenter.swift */,
+				1C7D8BB2253247DF718C91CB /* RemoteDisplayProvider.swift */,
+				6A2BEB301F49A291CC7066DB /* TLSIdentityStore.swift */,
+				B8FA876A09D87402C486D9EE /* VirtualDisplayGate.swift */,
+				E29AB07EECB5ACC230C6FE86 /* VoidDisplayDriverAdapter.swift */,
+				1612881A69093FD0968ED152 /* WindowPlacementController.swift */,
+			);
+			path = MACLandHost;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		61FE503E34D920C605CE9597 /* MACLandMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 52569A6F9B15C8C4B19506BF /* Build configuration list for PBXNativeTarget "MACLandMobile" */;
+			buildPhases = (
+				B93C8A17034991D666B95B06 /* Sources */,
+				8D3B076D1F621AA7AEA15721 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MACLandMobile;
+			packageProductDependencies = (
+				6C3CD22CABD2675A4BE9C5D6 /* WebRTC */,
+			);
+			productName = MACLandMobile;
+			productReference = 6C55610B39AA0F14AB930078 /* MACLandMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+		84BBB96A66E480D608918D3D /* MACLandHostTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAAF5BDEDECCC76F256144DA /* Build configuration list for PBXNativeTarget "MACLandHostTests" */;
+			buildPhases = (
+				BEB7C4E0B7150F4540190CC9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8ECE72F7DF8057D323F3E631 /* PBXTargetDependency */,
+			);
+			name = MACLandHostTests;
+			packageProductDependencies = (
+			);
+			productName = MACLandHostTests;
+			productReference = 0A1A2003B5F522DA1FA41299 /* MACLandHostTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		87E6622E9205AD62D901BED6 /* MACLandMobileTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2FA628E25B5B3B59CBB1A9B2 /* Build configuration list for PBXNativeTarget "MACLandMobileTests" */;
+			buildPhases = (
+				5E89389114A1DAB75ECAF746 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4A3CAD298EF94FAFE947C889 /* PBXTargetDependency */,
+			);
+			name = MACLandMobileTests;
+			packageProductDependencies = (
+			);
+			productName = MACLandMobileTests;
+			productReference = 95126833693B7CE62906FF8A /* MACLandMobileTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CE045F9F53A7627A3ED38E92 /* MACLandHost */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B55F539DEAB2363B59875E79 /* Build configuration list for PBXNativeTarget "MACLandHost" */;
+			buildPhases = (
+				DA48EB5096FFAE2E5AEA9536 /* Sources */,
+				8F87FC940C644F171142D5AD /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MACLandHost;
+			packageProductDependencies = (
+				3CA51C2E8824AD1F17F786ED /* WebRTC */,
+			);
+			productName = MACLandHost;
+			productReference = 1130CA875D65D8B3B3A105A5 /* MACLandHost.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		72B7C566ED70E6C2FACF5D93 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					61FE503E34D920C605CE9597 = {
+						DevelopmentTeam = UACGQ779PC;
+						ProvisioningStyle = Automatic;
+					};
+					84BBB96A66E480D608918D3D = {
+						DevelopmentTeam = UACGQ779PC;
+					};
+					87E6622E9205AD62D901BED6 = {
+						DevelopmentTeam = UACGQ779PC;
+					};
+					CE045F9F53A7627A3ED38E92 = {
+						DevelopmentTeam = UACGQ779PC;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 686FCDC0748ABE863B697773 /* Build configuration list for PBXProject "MACLand" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D072367B4C51CE028B9D816D;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1B26A9D7DF0CE0F9A219FFEB /* XCRemoteSwiftPackageReference "WebRTC" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = BD9DC7E33674C38C35710DE3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				61FE503E34D920C605CE9597 /* MACLandMobile */,
+				87E6622E9205AD62D901BED6 /* MACLandMobileTests */,
+				CE045F9F53A7627A3ED38E92 /* MACLandHost */,
+				84BBB96A66E480D608918D3D /* MACLandHostTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5E89389114A1DAB75ECAF746 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F6AC037212A2E28F9FD8F8C5 /* CoordinateMappingTests.swift in Sources */,
+				C6BB3149FDF88BB0847B6CD4 /* WorkspaceStateTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B93C8A17034991D666B95B06 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				169C556C0BE097E580008E5B /* ControlEnvelope.swift in Sources */,
+				E4193FBC965ED6FA4EA61E46 /* CoordinateMapping.swift in Sources */,
+				341C571A35737E2C4162A559 /* MACLandControlClient.swift in Sources */,
+				7F5B0672EF99CAB230E95355 /* MACLandDesktopView.swift in Sources */,
+				C692E9C25F4B9FD46FCEA216 /* MACLandHomeView.swift in Sources */,
+				E47CF6C9ACE1A66F10227DF0 /* MACLandMobileApp.swift in Sources */,
+				15E9064EFC340D4CCC4D87B2 /* NativeWebRTCClient.swift in Sources */,
+				62D6A8718428C19C0C2DCF8F /* NativeWebRTCSurface.swift in Sources */,
+				AB0B855E509634F17460273D /* PackageProtocolCompatibility.swift in Sources */,
+				954785B8279A5454A35ADA7D /* Payloads.swift in Sources */,
+				67C32F79302744B4AAEA444B /* ProtocolVersion.swift in Sources */,
+				21E1FB36006C8E88D79DA3B8 /* WorkspaceState.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BEB7C4E0B7150F4540190CC9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				053EF7D8B817A2083555FB24 /* ApplicationWindowControllerTests.swift in Sources */,
+				F7B95A1074A67B1762A385C4 /* HostTests.swift in Sources */,
+				540C9CD9BD9D2F163FE36E65 /* RemoteDisplayProviderTests.swift in Sources */,
+				D9C6402EC329744A22B19A18 /* VoidDisplayExtractedTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DA48EB5096FFAE2E5AEA9536 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FCDE4973E6C80519C46D707 /* ApplicationCatalog.swift in Sources */,
+				4A72E1DB8D1DE20B6AB47123 /* ApplicationWindowController.swift in Sources */,
+				DBDE04C62449A2D9E8F47C04 /* BetterDisplayDriverAdapter.swift in Sources */,
+				BA3F6FF706BE97C950B3BBCB /* ControlEnvelope.swift in Sources */,
+				ABA492361AB5325477ECCBEB /* HostCommandRouter.swift in Sources */,
+				F93C003DA6D5FA427472F4D1 /* HostRuntime.swift in Sources */,
+				6E4C1F237B2B4D79440C0C1C /* LaunchAtLoginController.swift in Sources */,
+				E5D35FFF24C119AF8A01B325 /* LocalControlListener.swift in Sources */,
+				A4C5A36AF12F63C9E788F079 /* MACLandHostApp.swift in Sources */,
+				66993E4E981E0721BEC33194 /* MACLandVoidDisplayBridge.m in Sources */,
+				374AAF552053FDD1CF3A4B49 /* Payloads.swift in Sources */,
+				2DDAF402FF7B95234FC000A5 /* PermissionCenter.swift in Sources */,
+				9E5FCA6EEBFC69C551B2F271 /* ProtocolVersion.swift in Sources */,
+				F370C27C727C7BB741AC3E8C /* RemoteDisplayProvider.swift in Sources */,
+				E6C13E3DB90BFBF265AAB4A5 /* TLSIdentityStore.swift in Sources */,
+				0938E2697DFBEF2F49C99F06 /* VirtualDisplayGate.swift in Sources */,
+				74A81E708647B62178070D35 /* VoidDisplayCapturePermission.swift in Sources */,
+				48D33D16D6C7494719C591B6 /* VoidDisplayCaptureTypes.swift in Sources */,
+				C0AFA55845314679CF7E4083 /* VoidDisplayDriverAdapter.swift in Sources */,
+				4B826D9962FBE2C875C16E3C /* VoidDisplayMediaCoordinator.swift in Sources */,
+				42988E819AF29B246805A08F /* VoidDisplayScreenCaptureSession.swift in Sources */,
+				35AA1BC2965EAFED776369B9 /* VoidDisplayWebRTC.swift in Sources */,
+				DB19CD381F9268A0ED626699 /* WindowPlacementController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4A3CAD298EF94FAFE947C889 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 61FE503E34D920C605CE9597 /* MACLandMobile */;
+			targetProxy = 7195AF68FBB1CD268A1275F8 /* PBXContainerItemProxy */;
+		};
+		8ECE72F7DF8057D323F3E631 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CE045F9F53A7627A3ED38E92 /* MACLandHost */;
+			targetProxy = 6E171AC5F88704DB63BD328C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0B95C7356151F11BB122A736 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MacHost/MACLandHost.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = MacHost/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.host;
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = MacHost/Sources/MACLandHost/VoidDisplayPrivate/MACLandVoidDisplayBridge.h;
+			};
+			name = Debug;
+		};
+		31F482D8106FAAB6FE4E1635 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MacHost/MACLandHost.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = MacHost/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.host;
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = MacHost/Sources/MACLandHost/VoidDisplayPrivate/MACLandVoidDisplayBridge.h;
+			};
+			name = Release;
+		};
+		5CCE13024EE9B531EF49F1BF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thraize.macland.mobile-tests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MACLandMobile.app/MACLandMobile";
+			};
+			name = Debug;
+		};
+		635C93F9F5567E6F8BA941FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = UACGQ779PC;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		68291F746A6E36A741289444 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thraize.macland.host-tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MACLandHost.app/Contents/MacOS/MACLandHost";
+			};
+			name = Debug;
+		};
+		AE585DE0B71EF3056F77474E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = iOS/MACLandMobile/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.mobile;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C1CFBEF2A40704E7DC468F21 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = UACGQ779PC;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		CD916B829A42D99D5A9370D1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thraize.macland.host-tests";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MACLandHost.app/Contents/MacOS/MACLandHost";
+			};
+			name = Release;
+		};
+		DAFA4CFFDFC805726639F6B4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thraize.macland.mobile-tests";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MACLandMobile.app/MACLandMobile";
+			};
+			name = Release;
+		};
+		F302FCAB5D3A0E2987C8192A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = iOS/MACLandMobile/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.mobile;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2FA628E25B5B3B59CBB1A9B2 /* Build configuration list for PBXNativeTarget "MACLandMobileTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5CCE13024EE9B531EF49F1BF /* Debug */,
+				DAFA4CFFDFC805726639F6B4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		52569A6F9B15C8C4B19506BF /* Build configuration list for PBXNativeTarget "MACLandMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F302FCAB5D3A0E2987C8192A /* Debug */,
+				AE585DE0B71EF3056F77474E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		686FCDC0748ABE863B697773 /* Build configuration list for PBXProject "MACLand" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1CFBEF2A40704E7DC468F21 /* Debug */,
+				635C93F9F5567E6F8BA941FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B55F539DEAB2363B59875E79 /* Build configuration list for PBXNativeTarget "MACLandHost" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0B95C7356151F11BB122A736 /* Debug */,
+				31F482D8106FAAB6FE4E1635 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DAAF5BDEDECCC76F256144DA /* Build configuration list for PBXNativeTarget "MACLandHostTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68291F746A6E36A741289444 /* Debug */,
+				CD916B829A42D99D5A9370D1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1B26A9D7DF0CE0F9A219FFEB /* XCRemoteSwiftPackageReference "WebRTC" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stasel/WebRTC.git";
+			requirement = {
+				kind = exactVersion;
+				version = 150.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3CA51C2E8824AD1F17F786ED /* WebRTC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1B26A9D7DF0CE0F9A219FFEB /* XCRemoteSwiftPackageReference "WebRTC" */;
+			productName = WebRTC;
+		};
+		6C3CD22CABD2675A4BE9C5D6 /* WebRTC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1B26A9D7DF0CE0F9A219FFEB /* XCRemoteSwiftPackageReference "WebRTC" */;
+			productName = WebRTC;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 72B7C566ED70E6C2FACF5D93 /* Project object */;
+}
