@@ -1,5 +1,7 @@
 import SwiftUI
+#if os(iOS)
 @preconcurrency import CoreMotion
+#endif
 
 private enum HomeColors {
     static let canvas = Color(white: 0.04)
@@ -791,7 +793,6 @@ struct RemoteSessionFullscreenView: View {
                 Text("Type on Mac").font(.headline)
                 TextField("Text to enter", text: $keyboardText)
                     .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.never)
                 Button("Send") {
                     workspace.sendText(keyboardText)
                     keyboardText = ""
@@ -1053,11 +1054,14 @@ private final class HeadPoseTracker: ObservableObject {
     @Published private(set) var yaw: CGFloat = 0
     @Published private(set) var pitch: CGFloat = 0
 
+    #if os(iOS)
     private let motion = CMMotionManager()
+    #endif
     private var referenceYaw: Double?
     private var referencePitch: Double?
 
     func start() {
+        #if os(iOS)
         guard motion.isDeviceMotionAvailable else { return }
         referenceYaw = nil
         referencePitch = nil
@@ -1076,16 +1080,23 @@ private final class HeadPoseTracker: ObservableObject {
                 self.pitch = CGFloat(samplePitch - (self.referencePitch ?? 0))
             }
         }
+        #endif
     }
 
     func recenter() {
+        #if os(iOS)
         referenceYaw = motion.deviceMotion?.attitude.yaw
         referencePitch = motion.deviceMotion?.attitude.pitch
+        #endif
         yaw = 0
         pitch = 0
     }
 
-    func stop() { motion.stopDeviceMotionUpdates() }
+    func stop() {
+        #if os(iOS)
+        motion.stopDeviceMotionUpdates()
+        #endif
+    }
 }
 
 @MainActor
