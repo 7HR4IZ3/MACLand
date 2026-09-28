@@ -6,8 +6,8 @@ The product is an iPhone app that presents a Mac-hosted desktop in a phone VR vi
 
 1. Pair the iPhone with the macOS host using pinned TLS and the host's time-limited JSON code.
 2. The host creates its experimental virtual display, captures its pixels, and streams one WebRTC video track over the LAN.
-3. Tap **Headset** in the iPhone session and rotate to landscape. The spatial scene is rendered separately for both eye regions. CoreMotion keeps the Mac panel and shell controls anchored as the phone rotates.
-4. Look down at the spatial dock, hold the reticle over an action, and press the viewer button or enable gaze dwell. The same head-gaze interaction opens applications, focuses/minimizes/restores/closes Mac windows, recenters the scene, and changes display settings. Looking at the Mac panel and selecting sends a Mac click at that point. **Type** in the flat view sends Unicode text from the iPhone keyboard sheet.
+3. Tap **Headset** in the iPhone session and rotate to landscape. The virtual scene is rendered separately for both eye regions. CoreMotion updates the scene from head rotation; it does not use eye tracking, hand tracking, passthrough, or room position tracking.
+4. The reticle stays at the center of view. Rotate your head to point it at the dock, an overlay item, or the Mac display, then press the viewer button or enable dwell selection. This head-gaze interaction opens applications, focuses/minimizes/restores/closes Mac windows, recenters the scene, changes display settings, or clicks the Mac desktop.
 5. The final per-eye scene passes through an adjustable Metal lens pre-warp with edge masking and chromatic correction. **Display** exposes lens strength, eye spacing, comfort vignette, and dwell timing. These settings persist on the phone.
 6. Tap **Exit VR** to use the flat remote desktop; touch drags move the pointer, and a tap clicks.
 
@@ -17,8 +17,8 @@ The product is an iPhone app that presents a Mac-hosted desktop in a phone VR vi
 | --- | --- | --- |
 | Optics | Adjustable GPU lens pre-warp and eye alignment; calibration is manual and both eyes still receive the same camera view | Replace manual coefficients with the Cardboard SDK QR-derived distortion mesh and per-eye projection |
 | Spatial windows | The shell can list and control real Mac windows, but video is still one virtual-display surface | Capture each `SCWindow` into its own WebRTC track and compose independently movable panels |
-| Tracking | Gyroscope attitude with manual recenter; no world tracking or positional depth | Add a tracked camera-based mode where device support and permissions allow |
-| Interaction | Viewer-button and dwell activation work for the dock, launcher, window switcher, display toggles, and desktop clicks | Add Bluetooth controller bindings, scroll/drag gestures, and ergonomic in-headset text input |
+| Tracking | Head rotation from the phone's motion sensors, with manual recenter; the virtual space does not track physical position | Keep rotational tracking responsive and recentering easy |
+| Interaction | Head-centered reticle with viewer-button and dwell activation for the dock, launcher, window switcher, display controls, and desktop clicks | Add Bluetooth controller bindings, scroll/drag gestures, and ergonomic in-headset text input |
 | Sound | Mac system audio is captured but not published to the WebRTC sender | Publish synchronized audio and confirm iPhone playback |
 | Display driver | Experimental private `CGVirtualDisplay` bridge | Replace with an approved external driver or supported Apple API if one becomes available |
 | Onboarding | Manual pairing JSON and preinstalled TLS identity | Add an identity setup flow and camera QR scanner |
