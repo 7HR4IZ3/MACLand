@@ -560,6 +560,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.host;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = MacHost/Sources/MACLandHost/VoidDisplayPrivate/MACLandVoidDisplayBridge.h;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -580,6 +581,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.host;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = MacHost/Sources/MACLandHost/VoidDisplayPrivate/MACLandVoidDisplayBridge.h;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
