@@ -54,6 +54,8 @@ final class MACLandProtocolTests: XCTestCase {
         XCTAssertEqual(ControlMessageKind.pairingResponse.rawValue, "pair.accept")
         XCTAssertEqual(ControlMessageKind.displayCreate.rawValue, "display.create")
         XCTAssertEqual(ControlMessageKind.appsList.rawValue, "apps.list")
+        XCTAssertEqual(ControlMessageKind.windowsList.rawValue, "windows.list")
+        XCTAssertEqual(ControlMessageKind.windowCommand.rawValue, "window.command")
         XCTAssertEqual(ControlMessageKind.appLaunch.rawValue, "app.launch")
         XCTAssertEqual(ControlMessageKind.appFocus.rawValue, "app.focus")
         XCTAssertEqual(ControlMessageKind.appClose.rawValue, "app.close")
@@ -68,6 +70,26 @@ final class MACLandProtocolTests: XCTestCase {
         XCTAssertEqual(MediaNegotiationKind.renegotiate.rawValue, "renegotiate")
         XCTAssertEqual(ControlErrorCode.unsupportedVersion.rawValue, "unsupported_version")
         XCTAssertEqual(ControlErrorCode.tlsIdentityNotConfigured.rawValue, "tls_identity_not_configured")
+    }
+
+    func testRemoteWindowInventoryRoundTrips() throws {
+        let payload = WindowsListPayload(windows: [
+            RemoteWindowDescriptor(
+                id: "840:0",
+                bundleIdentifier: "com.apple.Safari",
+                applicationName: "Safari",
+                title: "MACLand",
+                frame: RemoteWindowFrame(x: 18, y: 32, width: 920, height: 680)
+            )
+        ])
+        let envelope = try ControlEnvelope(kind: .windowsList, sequence: 20, payload: payload)
+        let data = try MACLandJSON.makeEncoder().encode(envelope)
+        let decoded = try ControlEnvelope<WindowsListPayload>.decode(
+            from: data,
+            expectedKind: .windowsList
+        )
+
+        XCTAssertEqual(decoded.payload, payload)
     }
 
     func testVersionHelpersAcceptCompatibleMinorAndRejectFutureMajor() throws {

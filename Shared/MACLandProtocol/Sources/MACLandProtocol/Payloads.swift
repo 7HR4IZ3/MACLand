@@ -392,6 +392,72 @@ public struct AppsListPayload: Codable, Equatable, Sendable {
     }
 }
 
+public struct RemoteWindowFrame: Codable, Equatable, Sendable {
+    public var x: Double
+    public var y: Double
+    public var width: Double
+    public var height: Double
+
+    public init(x: Double, y: Double, width: Double, height: Double) {
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+    }
+}
+
+public struct RemoteWindowDescriptor: Codable, Equatable, Identifiable, Sendable {
+    public var id: String
+    public var bundleIdentifier: String
+    public var applicationName: String
+    public var title: String
+    public var frame: RemoteWindowFrame?
+    public var isMinimized: Bool
+
+    public init(
+        id: String,
+        bundleIdentifier: String,
+        applicationName: String,
+        title: String,
+        frame: RemoteWindowFrame? = nil,
+        isMinimized: Bool = false
+    ) {
+        self.id = id
+        self.bundleIdentifier = bundleIdentifier
+        self.applicationName = applicationName
+        self.title = title
+        self.frame = frame
+        self.isMinimized = isMinimized
+    }
+}
+
+public struct WindowsListPayload: Codable, Equatable, Sendable {
+    public var windows: [RemoteWindowDescriptor]
+
+    public init(windows: [RemoteWindowDescriptor]) {
+        self.windows = windows
+    }
+}
+
+public enum WindowCommandAction: String, Codable, CaseIterable, Sendable {
+    case focus
+    case minimize
+    case restore
+    case close
+}
+
+public struct WindowCommandPayload: Codable, Equatable, Sendable {
+    public var windowID: String
+    public var bundleIdentifier: String
+    public var action: WindowCommandAction
+
+    public init(windowID: String, bundleIdentifier: String, action: WindowCommandAction) {
+        self.windowID = windowID
+        self.bundleIdentifier = bundleIdentifier
+        self.action = action
+    }
+}
+
 public struct ApplicationCommandPayload: Codable, Equatable, Sendable {
     public var bundleIdentifier: String
     public var displayID: UUID?

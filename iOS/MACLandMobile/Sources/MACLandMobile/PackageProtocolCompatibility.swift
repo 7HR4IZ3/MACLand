@@ -22,6 +22,8 @@ public enum ControlMessageKind: String, Codable, Sendable {
     case sessionState = "session.state"
     case displayState = "display.state"
     case appsList = "apps.list"
+    case windowsList = "windows.list"
+    case windowCommand = "window.command"
     case appLaunch = "app.launch"
     case appFocus = "app.focus"
     case appClose = "app.close"
@@ -138,6 +140,11 @@ public struct DisplayDescriptor: Codable, Equatable, Sendable { public var id: U
 public struct DisplayStatePayload: Codable, Equatable, Sendable { public var displays: [DisplayDescriptor]; public var selectedDisplayID: UUID? }
 public struct ApplicationDescriptor: Codable, Equatable, Sendable { public var bundleIdentifier: String; public var name: String; public var isRunning: Bool; public var processID: Int32? }
 public struct AppsListPayload: Codable, Equatable, Sendable { public var applications: [ApplicationDescriptor] }
+public struct RemoteWindowFrame: Codable, Equatable, Sendable { public var x: Double; public var y: Double; public var width: Double; public var height: Double; public init(x: Double, y: Double, width: Double, height: Double) { self.x = x; self.y = y; self.width = width; self.height = height } }
+public struct RemoteWindowDescriptor: Codable, Equatable, Identifiable, Sendable { public var id: String; public var bundleIdentifier: String; public var applicationName: String; public var title: String; public var frame: RemoteWindowFrame?; public var isMinimized: Bool; public init(id: String, bundleIdentifier: String, applicationName: String, title: String, frame: RemoteWindowFrame? = nil, isMinimized: Bool = false) { self.id = id; self.bundleIdentifier = bundleIdentifier; self.applicationName = applicationName; self.title = title; self.frame = frame; self.isMinimized = isMinimized } }
+public struct WindowsListPayload: Codable, Equatable, Sendable { public var windows: [RemoteWindowDescriptor]; public init(windows: [RemoteWindowDescriptor]) { self.windows = windows } }
+public enum WindowCommandAction: String, Codable, CaseIterable, Sendable { case focus; case minimize; case restore; case close }
+public struct WindowCommandPayload: Codable, Equatable, Sendable { public var windowID: String; public var bundleIdentifier: String; public var action: WindowCommandAction; public init(windowID: String, bundleIdentifier: String, action: WindowCommandAction) { self.windowID = windowID; self.bundleIdentifier = bundleIdentifier; self.action = action } }
 public struct SessionStartPayload: Codable, Equatable, Sendable { public var sessionID: UUID; public var clientID: UUID; public var displayID: UUID; public init(sessionID: UUID, clientID: UUID, displayID: UUID) { self.sessionID = sessionID; self.clientID = clientID; self.displayID = displayID } }
 public enum SessionState: String, Codable, Sendable { case negotiating; case running; case reconnecting; case ended }
 public struct SessionStatePayload: Codable, Equatable, Sendable { public var sessionID: UUID; public var state: SessionState; public var displayID: UUID? }

@@ -306,6 +306,8 @@ final class LocalControlListener: @unchecked Sendable {
     private let onAppLaunch: ((ApplicationCommandPayload) -> Void)?
     private let onAppFocus: ((ApplicationCommandPayload) -> Void)?
     private let onAppClose: ((ApplicationCommandPayload) -> Void)?
+    private let onWindowCommand: ((WindowCommandPayload) -> Void)?
+    private let onWindowsListRequest: (() -> Void)?
     private let onInputBatch: ((InputBatchPayload) -> Void)?
     private let appsListProvider: (() -> AppsListPayload)?
     private var trustedClientIDs = Set<UUID>()
@@ -331,6 +333,8 @@ final class LocalControlListener: @unchecked Sendable {
         onAppLaunch: ((ApplicationCommandPayload) -> Void)? = nil,
         onAppFocus: ((ApplicationCommandPayload) -> Void)? = nil,
         onAppClose: ((ApplicationCommandPayload) -> Void)? = nil,
+        onWindowCommand: ((WindowCommandPayload) -> Void)? = nil,
+        onWindowsListRequest: (() -> Void)? = nil,
         onInputBatch: ((InputBatchPayload) -> Void)? = nil,
         appsListProvider: (() -> AppsListPayload)? = nil
     ) throws {
@@ -350,6 +354,8 @@ final class LocalControlListener: @unchecked Sendable {
         self.onAppLaunch = onAppLaunch
         self.onAppFocus = onAppFocus
         self.onAppClose = onAppClose
+        self.onWindowCommand = onWindowCommand
+        self.onWindowsListRequest = onWindowsListRequest
         self.onInputBatch = onInputBatch
         self.appsListProvider = appsListProvider
         self.queue = DispatchQueue(label: "com.thraize.macland.control", qos: .userInitiated)
@@ -512,6 +518,10 @@ final class LocalControlListener: @unchecked Sendable {
                 try handleMediaICE(data: data, session: session)
             case .appsList:
                 try handleAppsList(session: session)
+            case .windowsList:
+                try handleWindowsList(session: session)
+            case .windowCommand:
+                try handleWindowCommand(data: data, session: session)
             case .appLaunch:
                 try handleApplicationCommand(data: data, expectedKind: .appLaunch, session: session, callback: onAppLaunch)
             case .appFocus:
@@ -644,6 +654,20 @@ final class LocalControlListener: @unchecked Sendable {
         if let appsList = appsListProvider?() {
             try session.send(kind: .appsList, payload: appsList)
         }
+    }
+
+    private func handleWindowsList(session: ControlWebSocketSession) throws {
+        guard case .established = session.state else { throw ControlTransportError.pairingRequired }
+        onWindowsListRequest?()
+    }
+
+    private func handleWindowCommand(data: Data, session: ControlWebSocketSession) throws {
+        let envelope = try ControlEnvelope<WindowCommandPayload>.decode(
+            from: data,
+            expectedKind: .windowCommand
+        )
+        guard case .established = session.state else { throw ControlTransportError.pairingRequired }
+        onWindowCommand?(envelope.payload)
     }
 
     private func handleApplicationCommand(

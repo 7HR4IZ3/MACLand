@@ -90,6 +90,7 @@ public final class MACLandControlClient: NSObject, ObservableObject {
     public var onStateChange: ((MACLandControlClientState) -> Void)?
     public var onDisplayState: ((DisplayStatePayload) -> Void)?
     public var onAppsList: ((AppsListPayload) -> Void)?
+    public var onWindowsList: ((WindowsListPayload) -> Void)?
     public var onSessionState: ((SessionStatePayload) -> Void)?
 
     private var webSocketTask: URLSessionWebSocketTask?
@@ -216,6 +217,25 @@ public final class MACLandControlClient: NSObject, ObservableObject {
         )
     }
 
+    public func requestWindowsList() throws {
+        try send(kind: .windowsList, payload: WindowsListPayload(windows: []))
+    }
+
+    public func controlWindow(
+        id: String,
+        bundleIdentifier: String,
+        action: WindowCommandAction
+    ) throws {
+        try send(
+            kind: .windowCommand,
+            payload: WindowCommandPayload(
+                windowID: id,
+                bundleIdentifier: bundleIdentifier,
+                action: action
+            )
+        )
+    }
+
     private func sendPairingRequest() {
         guard let pairingPayload else { return }
         let identity = DeviceIdentityMetadata(
@@ -306,6 +326,9 @@ public final class MACLandControlClient: NSObject, ObservableObject {
             case .appsList:
                 let envelope = try ControlEnvelope<AppsListPayload>.decode(from: data, expectedKind: .appsList)
                 onAppsList?(envelope.payload)
+            case .windowsList:
+                let envelope = try ControlEnvelope<WindowsListPayload>.decode(from: data, expectedKind: .windowsList)
+                onWindowsList?(envelope.payload)
             case .mediaOffer:
                 let envelope = try ControlEnvelope<MediaOfferPayload>.decode(from: data, expectedKind: .mediaOffer)
                 handleMediaOffer(envelope)

@@ -77,6 +77,7 @@ public final class WorkspaceState: ObservableObject {
     @Published public private(set) var connectionError: String?
     @Published public private(set) var mediaState = RemoteMediaState()
     @Published public private(set) var applications: [ApplicationDescriptor] = []
+    @Published public private(set) var remoteWindows: [RemoteWindowDescriptor] = []
     @Published public var isLauncherPresented = false
     @Published public var isTaskSwitcherPresented = false
     @Published public var isRemoteFullscreen = false
@@ -141,6 +142,9 @@ public final class WorkspaceState: ObservableObject {
         }
         controlClient.onAppsList = { [weak self] payload in
             self?.applications = payload.applications.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        }
+        controlClient.onWindowsList = { [weak self] payload in
+            self?.remoteWindows = payload.windows
         }
     }
 
@@ -305,6 +309,42 @@ public final class WorkspaceState: ObservableObject {
         catch { connectionError = error.localizedDescription }
     }
 
+    public func refreshRemoteWindows() {
+        guard connectionState.isConnected else { return }
+        do { try controlClient.requestWindowsList() }
+        catch { connectionError = error.localizedDescription }
+    }
+
+    public func controlRemoteWindow(_ window: RemoteWindowDescriptor, action: WindowCommandAction) {
+        guard connectionState.isConnected else { return }
+        do {
+            try controlClient.controlWindow(
+                id: window.id,
+                bundleIdentifier: window.bundleIdentifier,
+                action: action
+            )
+            if action == .focus || action == .restore {
+                remoteWindows = remoteWindows.map {
+                    guard $0.id == window.id else { return $0 }
+                    var updated = $0
+                    updated.isMinimized = false
+                    return updated
+                }
+            } else if action == .minimize {
+                remoteWindows = remoteWindows.map {
+                    guard $0.id == window.id else { return $0 }
+                    var updated = $0
+                    updated.isMinimized = true
+                    return updated
+                }
+            } else if action == .close {
+                remoteWindows.removeAll { $0.id == window.id }
+            }
+        } catch {
+            connectionError = error.localizedDescription
+        }
+    }
+
     public func disconnect() {
         controlClient.disconnect()
         discovery.stop()
@@ -313,5 +353,6 @@ public final class WorkspaceState: ObservableObject {
         isRemoteFullscreen = false
         mediaState.reset()
         applications = []
+        remoteWindows = []
     }
 }

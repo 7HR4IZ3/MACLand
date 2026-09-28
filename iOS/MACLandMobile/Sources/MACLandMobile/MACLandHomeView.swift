@@ -735,6 +735,7 @@ struct RemoteSessionFullscreenView: View {
     @ObservedObject var workspace: WorkspaceState
     @ObservedObject private var mediaClient: NativeWebRTCClient
     @StateObject private var headPose = HeadPoseTracker()
+    @StateObject private var spatialScene = SpatialSceneState()
     @State private var lastTouch: RemoteTouchPoint?
     @State private var isHeadsetMode = false
     @State private var isHeadsetLauncherVisible = false
@@ -812,12 +813,12 @@ struct RemoteSessionFullscreenView: View {
     }
 
     private var headsetView: some View {
-        GeometryReader { geometry in
-            HStack(spacing: 0) {
-                headsetEye(size: CGSize(width: geometry.size.width / 2, height: geometry.size.height))
-                headsetEye(size: CGSize(width: geometry.size.width / 2, height: geometry.size.height))
-            }
-            .background(Color.black)
+        SpatialHeadsetView(
+            workspace: workspace,
+            mediaClient: mediaClient,
+            scene: spatialScene
+        ) {
+            isHeadsetMode = false
         }
     }
 
@@ -934,7 +935,6 @@ struct RemoteSessionFullscreenView: View {
 
             Button {
                 isHeadsetMode = true
-                headPose.start()
             } label: {
                 Label("Headset", systemImage: "viewfinder")
                     .font(.caption.weight(.semibold))
