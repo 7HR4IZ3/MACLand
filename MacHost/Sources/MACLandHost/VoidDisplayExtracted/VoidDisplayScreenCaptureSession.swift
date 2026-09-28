@@ -3,7 +3,7 @@
 // Adapted for MACLand's display-ID boundary and native WebRTC session.
 import CoreMedia
 import Foundation
-import ScreenCaptureKit
+@preconcurrency import ScreenCaptureKit
 
 @MainActor
 protocol VoidDisplayCaptureSession: AnyObject {
