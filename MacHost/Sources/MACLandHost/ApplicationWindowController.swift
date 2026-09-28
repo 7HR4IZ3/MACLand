@@ -351,12 +351,12 @@ final class ApplicationWindowController {
     init(
         displayBounds: CGRect,
         policy: ApplicationWindowPolicy = .default,
-        applicationProvider: any RunningApplicationProviding = WorkspaceRunningApplicationProvider(),
-        accessibilityClient: any WindowAccessibilityClient = AXWindowAccessibilityClient()
+        applicationProvider: (any RunningApplicationProviding)? = nil,
+        accessibilityClient: (any WindowAccessibilityClient)? = nil
     ) throws {
         self.policy = policy
-        self.applicationProvider = applicationProvider
-        self.accessibilityClient = accessibilityClient
+        self.applicationProvider = applicationProvider ?? WorkspaceRunningApplicationProvider()
+        self.accessibilityClient = accessibilityClient ?? AXWindowAccessibilityClient()
         placementController = try WindowPlacementController(displayBounds: displayBounds)
     }
 
