@@ -21,4 +21,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: macOS host
-        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandHost -sdk macosx build CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandHost -sdk macosx build CODE_SIGNING_ALLOWED=NO SWIFT_ENABLE_BATCH_MODE=NO
