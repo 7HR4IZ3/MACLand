@@ -457,6 +457,7 @@ private struct HostMenuView: View {
                         HStack(spacing: 8) {
                             ActionButton(title: "Show data", systemImage: "doc.text.magnifyingglass", action: { pendingPairingCode = runtime.pairingCode })
                             ActionButton(title: "Copy data", systemImage: "doc.on.doc.fill", action: runtime.copyPairingPayload)
+                            ActionButton(title: "New code", systemImage: "arrow.clockwise", action: runtime.rotatePairingCode)
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 # MACLand
 
-MACLand is an iOS-first phone desktop shell for controlling a Mac through a dedicated remote display.
+MACLand is an iPhone spatial desktop shell for controlling a Mac through a dedicated remote display, including a side-by-side headset view for phone VR viewers.
 
 ## Current status
 
@@ -14,9 +14,11 @@ The project now contains:
 
 The supported public virtual-display gate is still blocked: the installed macOS SDK exposes no supported public host-side virtual-display API. For the current experiment, the host uses a narrowly isolated VoidDisplay-compatible private `CGVirtualDisplay` bridge, selected explicitly as a temporary development path. It is not a production or App Store-safe implementation. See [docs/FEASIBILITY.md](docs/FEASIBILITY.md).
 
-The current integration is buildable but not yet device-validated end-to-end. The host now has the TLS WebSocket listener, pairing-code approval, typed command routing, ScreenCaptureKit display capture, and native WebRTC M150 sender. The iOS client has Bonjour discovery, pinned WSS trust evaluation, signaling, reconnect handling, native WebRTC surface plumbing, dynamic display geometry, and pointer/app command routes.
+The current integration is not yet device-validated end-to-end. The host has a TLS WebSocket listener, pairing codes that expire after ten minutes, bidirectional ICE signaling, typed command routing, ScreenCaptureKit display capture, Unicode text and click injection, and a native WebRTC M150 sender. The iOS client has Bonjour discovery, pinned WSS trust evaluation, signaling, reconnect handling, a side-by-side viewer with CoreMotion head tracking and gaze selection, a Mac app launcher, a native WebRTC surface, and dynamic display geometry.
 
-The host TLS listener intentionally fails closed until a certificate and private-key identity is installed in the login keychain under `com.thraize.macland.host.tls`. Pairing approval is currently an in-memory development control, and the host menu copies pairing JSON for paste into the iOS Settings screen; a QR scanner and persistent device revocation UI are still pending. System audio capture is exposed by the ScreenCaptureKit layer, but audio track publishing is not yet enabled in the WebRTC sender. Terminal control remains disabled by default.
+Tap **Headset** in the remote session, rotate the phone to landscape, and place it in a compatible phone VR holder. Each eye shows the same Mac video track. Use **Center** to recenter, **Select** or a screen-tapping viewer button to click, **Apps** to open a Mac app, and **Type** to send text. Remove the phone from the holder to use the system keyboard. This is an app-based spatial shell over macOS, not a replacement for iOS or macOS. The display is monoscopic and has no viewer-specific lens distortion calibration or spatial window compositor yet; see [headset limitations](docs/CARDBOARD_SPATIAL_OS.md).
+
+The host TLS listener intentionally fails closed until a certificate and private-key identity is installed in the login keychain under `com.thraize.macland.host.tls`. Pairing approval is currently an in-memory development control; use **New code** after ten minutes, then copy fresh pairing JSON into iOS Settings. A QR scanner and persistent device revocation UI are still pending. System audio capture is exposed by the ScreenCaptureKit layer, but audio track publishing is not yet enabled in the WebRTC sender. Terminal control remains disabled by default.
 
 The selected development path is documented in [docs/DRIVER_INTEGRATION.md](docs/DRIVER_INTEGRATION.md). The default host provider is now the experimental VoidDisplay bridge. The BetterDisplay adapter remains in the codebase as a future supported-driver option. The direct private-display smoke test has verified a macOS-recognized 1080x1920 display, primary-display stability, and teardown; a real Mac-to-iPhone WebRTC, permissions, rotation, reconnect, and input run remains required.
 

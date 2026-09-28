@@ -105,6 +105,11 @@ final class HostRuntime: ObservableObject {
                         self?.applyMediaAnswer(sdp: answer.sdp)
                     }
                 },
+                onMediaICE: { [weak self] candidate in
+                    Task { @MainActor in
+                        self?.applyMediaICE(candidate)
+                    }
+                },
                 onAppLaunch: { [weak self] command in
                     Task { @MainActor in self?.launchApplication(bundleIdentifier: command.bundleIdentifier) }
                 },
@@ -130,7 +135,8 @@ final class HostRuntime: ObservableObject {
             pairingStatus = "Pairing is ready. Code: " + listener.pairingCode
             pairingPayloadJSON = makePairingPayloadJSON(
                 certificatePinning: tlsMaterial.certificatePinning,
-                pairingCode: listener.pairingCode
+                pairingCode: listener.pairingCode,
+                expiresAt: listener.pairingExpiresAt
             )
             logger.info("Host started with id \(self.hostID.uuidString, privacy: .public)")
 
@@ -369,11 +375,40 @@ final class HostRuntime: ObservableObject {
         }
     }
 
+    private func applyMediaICE(_ payload: MediaICEPayload) {
+        guard payload.sessionID == mediaSessionID,
+              let index = payload.sdpMLineIndex,
+              let mediaCoordinator else { return }
+        Task { @MainActor in
+            await mediaCoordinator.addRemoteICECandidate(
+                VoidDisplayWebRTCICECandidate(
+                    candidate: payload.candidate,
+                    sdpMid: payload.sdpMid,
+                    sdpMLineIndex: index
+                )
+            )
+            mediaStatus = mediaCoordinator.state.label
+        }
+    }
+
     func setPairingApprovalEnabled(_ enabled: Bool) {
         pairingApproval.setEnabled(enabled)
         pairingStatus = enabled
             ? "New pairing requests will be accepted when the QR/code matches."
             : "Pairing is disabled. Existing paired devices remain trusted."
+    }
+
+    func rotatePairingCode() {
+        guard let controlListener,
+              let certificatePinning = try? tlsIdentityStore.load().certificatePinning else { return }
+        controlListener.rotatePairingCode()
+        pairingCode = controlListener.pairingCode
+        pairingPayloadJSON = makePairingPayloadJSON(
+            certificatePinning: certificatePinning,
+            pairingCode: pairingCode,
+            expiresAt: controlListener.pairingExpiresAt
+        )
+        pairingStatus = "Pairing code refreshed. It expires in 10 minutes."
     }
 
     func copyPairingPayload() {
@@ -403,7 +438,8 @@ final class HostRuntime: ObservableObject {
 
     private func makePairingPayloadJSON(
         certificatePinning: CertificatePinningMetadata,
-        pairingCode: String
+        pairingCode: String,
+        expiresAt: Date
     ) -> String {
         let endpointHost = pairingEndpointHost()
         let payload = PairingQRCodePayload(
@@ -416,7 +452,7 @@ final class HostRuntime: ObservableObject {
             endpoint: "wss://" + endpointHost + ":" + String(LocalControlListener.controlPort.rawValue),
             pairingCode: pairingCode,
             certificatePinning: certificatePinning,
-            expiresAt: Date().addingTimeInterval(600),
+            expiresAt: expiresAt,
             nonce: UUID().uuidString
         )
         guard let data = try? MACLandJSON.makeEncoder().encode(payload) else { return "" }
@@ -433,6 +469,10 @@ final class HostRuntime: ObservableObject {
                 switch result {
                 case .success:
                     self?.logger.info("Launched \(bundleIdentifier, privacy: .public)")
+                    self?.refreshApplications()
+                    if let apps = self?.appsListPayload() {
+                        self?.controlListener?.sendToPairedClients(kind: .appsList, payload: apps)
+                    }
                     self?.controlListener?.sendToPairedClients(
                         kind: .appLifecycle,
                         payload: AppLifecyclePayload(event: .launched, bundleIdentifier: bundleIdentifier)
@@ -469,6 +509,8 @@ final class HostRuntime: ObservableObject {
                 payload: AppLifecyclePayload(event: .terminated, bundleIdentifier: bundleIdentifier)
             )
             workspaceActionStatus = "Closed windows for " + bundleIdentifier + "."
+            refreshApplications()
+            controlListener?.sendToPairedClients(kind: .appsList, payload: appsListPayload())
         } catch {
             workspaceActionStatus = error.localizedDescription
         }

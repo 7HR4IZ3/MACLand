@@ -21,6 +21,7 @@ public enum ControlMessageKind: String, Codable, Sendable {
     case sessionStart = "session.start"
     case sessionState = "session.state"
     case displayState = "display.state"
+    case appsList = "apps.list"
     case appLaunch = "app.launch"
     case appFocus = "app.focus"
     case appClose = "app.close"
@@ -135,6 +136,8 @@ public struct PairingResponsePayload: Codable, Equatable, Sendable { public var 
 
 public struct DisplayDescriptor: Codable, Equatable, Sendable { public var id: UUID; public var name: String; public var pixelWidth: Int; public var pixelHeight: Int; public var scaleFactor: Double; public var refreshRate: Double? }
 public struct DisplayStatePayload: Codable, Equatable, Sendable { public var displays: [DisplayDescriptor]; public var selectedDisplayID: UUID? }
+public struct ApplicationDescriptor: Codable, Equatable, Sendable { public var bundleIdentifier: String; public var name: String; public var isRunning: Bool; public var processID: Int32? }
+public struct AppsListPayload: Codable, Equatable, Sendable { public var applications: [ApplicationDescriptor] }
 public struct SessionStartPayload: Codable, Equatable, Sendable { public var sessionID: UUID; public var clientID: UUID; public var displayID: UUID; public init(sessionID: UUID, clientID: UUID, displayID: UUID) { self.sessionID = sessionID; self.clientID = clientID; self.displayID = displayID } }
 public enum SessionState: String, Codable, Sendable { case negotiating; case running; case reconnecting; case ended }
 public struct SessionStatePayload: Codable, Equatable, Sendable { public var sessionID: UUID; public var state: SessionState; public var displayID: UUID? }

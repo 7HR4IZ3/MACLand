@@ -293,7 +293,8 @@ final class LocalControlListener: @unchecked Sendable {
     let hostName: String
     let certificatePinningMetadata: CertificatePinningMetadata?
     let hostID: UUID
-    let pairingCode: String
+    private(set) var pairingCode: String
+    private(set) var pairingExpiresAt: Date
     var port: NWEndpoint.Port? { listener?.port }
 
     private let queue: DispatchQueue
@@ -301,6 +302,7 @@ final class LocalControlListener: @unchecked Sendable {
     private let pairingApproval: PairingApprovalStore
     private let onSessionStart: ((SessionStartPayload) -> Void)?
     private let onMediaAnswer: ((MediaAnswerPayload) -> Void)?
+    private let onMediaICE: ((MediaICEPayload) -> Void)?
     private let onAppLaunch: ((ApplicationCommandPayload) -> Void)?
     private let onAppFocus: ((ApplicationCommandPayload) -> Void)?
     private let onAppClose: ((ApplicationCommandPayload) -> Void)?
@@ -321,9 +323,11 @@ final class LocalControlListener: @unchecked Sendable {
         capabilities: Capabilities = Capabilities(),
         permissionState: PermissionState = PermissionState(),
         pairingCode: String = LocalControlListener.makePairingCode(),
+        pairingExpiresAt: Date = Date().addingTimeInterval(600),
         pairingApproval: PairingApprovalStore = PairingApprovalStore(),
         onSessionStart: ((SessionStartPayload) -> Void)? = nil,
         onMediaAnswer: ((MediaAnswerPayload) -> Void)? = nil,
+        onMediaICE: ((MediaICEPayload) -> Void)? = nil,
         onAppLaunch: ((ApplicationCommandPayload) -> Void)? = nil,
         onAppFocus: ((ApplicationCommandPayload) -> Void)? = nil,
         onAppClose: ((ApplicationCommandPayload) -> Void)? = nil,
@@ -338,9 +342,11 @@ final class LocalControlListener: @unchecked Sendable {
         self.certificatePinningMetadata = certificatePinningMetadata
         self.hostID = hostID
         self.pairingCode = pairingCode
+        self.pairingExpiresAt = pairingExpiresAt
         self.pairingApproval = pairingApproval
         self.onSessionStart = onSessionStart
         self.onMediaAnswer = onMediaAnswer
+        self.onMediaICE = onMediaICE
         self.onAppLaunch = onAppLaunch
         self.onAppFocus = onAppFocus
         self.onAppClose = onAppClose
@@ -421,6 +427,13 @@ final class LocalControlListener: @unchecked Sendable {
 
     func setPairingApprovalEnabled(_ enabled: Bool) {
         pairingApproval.setEnabled(enabled)
+    }
+
+    func rotatePairingCode() {
+        queue.sync {
+            pairingCode = Self.makePairingCode()
+            pairingExpiresAt = Date().addingTimeInterval(600)
+        }
     }
 
     func revoke(clientID: UUID) {
@@ -533,7 +546,7 @@ final class LocalControlListener: @unchecked Sendable {
             expectedKind: .pairingRequest
         )
         let request = envelope.payload
-        guard request.pairingCode == pairingCode else {
+        guard request.pairingCode == pairingCode, Date() < pairingExpiresAt else {
             try rejectPairing(request: request, reason: "The pairing code is invalid or expired.", session: session, requestID: envelope.id)
             return
         }
@@ -623,7 +636,7 @@ final class LocalControlListener: @unchecked Sendable {
     private func handleMediaICE(data: Data, session: ControlWebSocketSession) throws {
         let envelope = try ControlEnvelope<MediaICEPayload>.decode(from: data, expectedKind: .mediaICE)
         guard case .established = session.state else { throw ControlTransportError.pairingRequired }
-        Self.logger.debug("Received WebRTC ICE candidate for \(envelope.payload.sessionID.uuidString, privacy: .public)")
+        onMediaICE?(envelope.payload)
     }
 
     private func handleAppsList(session: ControlWebSocketSession) throws {

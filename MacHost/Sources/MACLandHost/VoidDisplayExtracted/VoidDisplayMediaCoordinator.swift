@@ -45,6 +45,8 @@ final class VoidDisplayMediaCoordinator: ObservableObject {
 
     private var captureSession: VoidDisplayScreenCaptureSession?
     private var senderSession: (any VoidDisplayWebRTCSession)?
+    private var pendingRemoteICE: [VoidDisplayWebRTCICECandidate] = []
+    private var hasRemoteAnswer = false
 
     init(
         configuration: VoidDisplayCaptureConfiguration,
@@ -95,9 +97,27 @@ final class VoidDisplayMediaCoordinator: ObservableObject {
 
         do {
             try await senderSession.applyRemoteAnswer(answer)
+            hasRemoteAnswer = true
+            for candidate in pendingRemoteICE {
+                try await senderSession.addRemoteICECandidate(candidate)
+            }
+            pendingRemoteICE.removeAll()
             state = .streaming
         } catch {
             state = .failed(error.localizedDescription)
+        }
+    }
+
+    func addRemoteICECandidate(_ candidate: VoidDisplayWebRTCICECandidate) async {
+        guard let senderSession else { return }
+        guard hasRemoteAnswer else {
+            pendingRemoteICE.append(candidate)
+            return
+        }
+        do {
+            try await senderSession.addRemoteICECandidate(candidate)
+        } catch {
+            state = .failed("Could not add the phone's network candidate: " + error.localizedDescription)
         }
     }
 
@@ -142,6 +162,8 @@ final class VoidDisplayMediaCoordinator: ObservableObject {
         captureSession = nil
         senderSession?.close()
         senderSession = nil
+        pendingRemoteICE.removeAll()
+        hasRemoteAnswer = false
     }
 }
 
