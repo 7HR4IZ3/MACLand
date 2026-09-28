@@ -13,6 +13,8 @@ public enum ControlMessageKind: String, Codable, CaseIterable, Sendable {
     case displayCreate = "display.create"
     case displayState = "display.state"
     case appsList = "apps.list"
+    case windowsList = "windows.list"
+    case windowCommand = "window.command"
     case appLaunch = "app.launch"
     case appFocus = "app.focus"
     case appClose = "app.close"

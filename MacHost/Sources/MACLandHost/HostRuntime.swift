@@ -98,11 +98,17 @@ final class HostRuntime: ObservableObject {
                     Task { @MainActor in
                         self?.sendCurrentDisplayState()
                         self?.startMediaCapture()
+                        self?.broadcastWindowsList()
                     }
                 },
                 onMediaAnswer: { [weak self] answer in
                     Task { @MainActor in
                         self?.applyMediaAnswer(sdp: answer.sdp)
+                    }
+                },
+                onMediaICE: { [weak self] candidate in
+                    Task { @MainActor in
+                        self?.applyMediaICE(candidate)
                     }
                 },
                 onAppLaunch: { [weak self] command in
@@ -113,6 +119,12 @@ final class HostRuntime: ObservableObject {
                 },
                 onAppClose: { [weak self] command in
                     Task { @MainActor in self?.closeApplication(bundleIdentifier: command.bundleIdentifier) }
+                },
+                onWindowCommand: { [weak self] command in
+                    Task { @MainActor in self?.handleWindowCommand(command) }
+                },
+                onWindowsListRequest: { [weak self] in
+                    Task { @MainActor in self?.broadcastWindowsList() }
                 },
                 onInputBatch: { [weak self] batch in
                     Task { @MainActor in self?.inject(batch: batch) }
@@ -130,7 +142,8 @@ final class HostRuntime: ObservableObject {
             pairingStatus = "Pairing is ready. Code: " + listener.pairingCode
             pairingPayloadJSON = makePairingPayloadJSON(
                 certificatePinning: tlsMaterial.certificatePinning,
-                pairingCode: listener.pairingCode
+                pairingCode: listener.pairingCode,
+                expiresAt: listener.pairingExpiresAt
             )
             logger.info("Host started with id \(self.hostID.uuidString, privacy: .public)")
 
@@ -369,11 +382,40 @@ final class HostRuntime: ObservableObject {
         }
     }
 
+    private func applyMediaICE(_ payload: MediaICEPayload) {
+        guard payload.sessionID == mediaSessionID,
+              let index = payload.sdpMLineIndex,
+              let mediaCoordinator else { return }
+        Task { @MainActor in
+            await mediaCoordinator.addRemoteICECandidate(
+                VoidDisplayWebRTCICECandidate(
+                    candidate: payload.candidate,
+                    sdpMid: payload.sdpMid,
+                    sdpMLineIndex: index
+                )
+            )
+            mediaStatus = mediaCoordinator.state.label
+        }
+    }
+
     func setPairingApprovalEnabled(_ enabled: Bool) {
         pairingApproval.setEnabled(enabled)
         pairingStatus = enabled
             ? "New pairing requests will be accepted when the QR/code matches."
             : "Pairing is disabled. Existing paired devices remain trusted."
+    }
+
+    func rotatePairingCode() {
+        guard let controlListener,
+              let certificatePinning = try? tlsIdentityStore.load().certificatePinning else { return }
+        controlListener.rotatePairingCode()
+        pairingCode = controlListener.pairingCode
+        pairingPayloadJSON = makePairingPayloadJSON(
+            certificatePinning: certificatePinning,
+            pairingCode: pairingCode,
+            expiresAt: controlListener.pairingExpiresAt
+        )
+        pairingStatus = "Pairing code refreshed. It expires in 10 minutes."
     }
 
     func copyPairingPayload() {
@@ -403,7 +445,8 @@ final class HostRuntime: ObservableObject {
 
     private func makePairingPayloadJSON(
         certificatePinning: CertificatePinningMetadata,
-        pairingCode: String
+        pairingCode: String,
+        expiresAt: Date
     ) -> String {
         let endpointHost = pairingEndpointHost()
         let payload = PairingQRCodePayload(
@@ -416,7 +459,7 @@ final class HostRuntime: ObservableObject {
             endpoint: "wss://" + endpointHost + ":" + String(LocalControlListener.controlPort.rawValue),
             pairingCode: pairingCode,
             certificatePinning: certificatePinning,
-            expiresAt: Date().addingTimeInterval(600),
+            expiresAt: expiresAt,
             nonce: UUID().uuidString
         )
         guard let data = try? MACLandJSON.makeEncoder().encode(payload) else { return "" }
@@ -433,11 +476,16 @@ final class HostRuntime: ObservableObject {
                 switch result {
                 case .success:
                     self?.logger.info("Launched \(bundleIdentifier, privacy: .public)")
+                    self?.refreshApplications()
+                    if let apps = self?.appsListPayload() {
+                        self?.controlListener?.sendToPairedClients(kind: .appsList, payload: apps)
+                    }
                     self?.controlListener?.sendToPairedClients(
                         kind: .appLifecycle,
                         payload: AppLifecyclePayload(event: .launched, bundleIdentifier: bundleIdentifier)
                     )
                     await self?.placeLaunchedApplication(bundleIdentifier: bundleIdentifier)
+                    self?.broadcastWindowsList()
                 case let .failure(error):
                     self?.workspaceActionStatus = error.localizedDescription
                     self?.logger.error("Could not launch \(bundleIdentifier, privacy: .public): \(error.localizedDescription, privacy: .public)")
@@ -453,6 +501,7 @@ final class HostRuntime: ObservableObject {
             guard let window else { throw ApplicationWindowError.noWindows(bundleIdentifier: bundleIdentifier) }
             try windowController.focus(window: window, in: bundleIdentifier)
             workspaceActionStatus = "Focused " + bundleIdentifier + "."
+            broadcastWindowsList()
         } catch {
             workspaceActionStatus = error.localizedDescription
         }
@@ -469,6 +518,9 @@ final class HostRuntime: ObservableObject {
                 payload: AppLifecyclePayload(event: .terminated, bundleIdentifier: bundleIdentifier)
             )
             workspaceActionStatus = "Closed windows for " + bundleIdentifier + "."
+            refreshApplications()
+            controlListener?.sendToPairedClients(kind: .appsList, payload: appsListPayload())
+            broadcastWindowsList()
         } catch {
             workspaceActionStatus = error.localizedDescription
         }
@@ -503,6 +555,76 @@ final class HostRuntime: ObservableObject {
                 )
             }
         )
+    }
+
+    private func windowsListPayload() -> WindowsListPayload {
+        guard let windowController else { return WindowsListPayload(windows: []) }
+        let displayOrigin = displayProvider.activeDisplayBounds?.origin ?? .zero
+        var descriptors: [RemoteWindowDescriptor] = []
+
+        for application in applications {
+            guard NSRunningApplication.runningApplications(
+                withBundleIdentifier: application.bundleIdentifier
+            ).contains(where: { !$0.isTerminated }) else { continue }
+
+            guard let windows = try? windowController.locateWindows(
+                for: application.bundleIdentifier
+            ) else { continue }
+
+            descriptors.append(contentsOf: windows.map { window in
+                let remoteFrame = window.frame.map {
+                    RemoteWindowFrame(
+                        x: Double($0.origin.x - displayOrigin.x),
+                        y: Double($0.origin.y - displayOrigin.y),
+                        width: Double($0.width),
+                        height: Double($0.height)
+                    )
+                }
+                return RemoteWindowDescriptor(
+                    id: window.id.description,
+                    bundleIdentifier: application.bundleIdentifier,
+                    applicationName: application.name,
+                    title: window.title,
+                    frame: remoteFrame,
+                    isMinimized: window.isMinimized
+                )
+            })
+        }
+        return WindowsListPayload(windows: descriptors)
+    }
+
+    private func broadcastWindowsList() {
+        controlListener?.sendToPairedClients(
+            kind: .windowsList,
+            payload: windowsListPayload()
+        )
+    }
+
+    private func handleWindowCommand(_ command: WindowCommandPayload) {
+        do {
+            guard let windowController else {
+                throw ApplicationWindowError.noWindows(bundleIdentifier: command.bundleIdentifier)
+            }
+            let windows = try windowController.locateWindows(for: command.bundleIdentifier)
+            guard let window = windows.first(where: { $0.id.description == command.windowID }) else {
+                throw ApplicationWindowError.noWindows(bundleIdentifier: command.bundleIdentifier)
+            }
+            switch command.action {
+            case .focus:
+                try windowController.focus(window: window, in: command.bundleIdentifier)
+            case .minimize:
+                try windowController.minimize(window: window, in: command.bundleIdentifier)
+            case .restore:
+                try windowController.restore(window: window, in: command.bundleIdentifier)
+                try windowController.focus(window: window, in: command.bundleIdentifier)
+            case .close:
+                try windowController.close(window: window, in: command.bundleIdentifier)
+            }
+            workspaceActionStatus = "Updated " + command.bundleIdentifier + " window."
+            broadcastWindowsList()
+        } catch {
+            workspaceActionStatus = error.localizedDescription
+        }
     }
 
     func setTerminalControlEnabled(_ enabled: Bool) {

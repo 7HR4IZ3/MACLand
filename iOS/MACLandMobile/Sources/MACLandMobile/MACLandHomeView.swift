@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(iOS)
+@preconcurrency import CoreMotion
+#endif
 
 private enum HomeColors {
     static let canvas = Color(white: 0.04)
@@ -578,6 +581,13 @@ struct LauncherOverlay: View {
         return WorkspaceWindowKind.allCases.filter { $0.title.localizedCaseInsensitiveContains(query) }
     }
 
+    private var macApps: [ApplicationDescriptor] {
+        let query = workspace.launcherQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        return workspace.applications.filter {
+            query.isEmpty || $0.name.localizedCaseInsensitiveContains(query)
+        }
+    }
+
     var body: some View {
         overlayPanel {
             HStack {
@@ -602,7 +612,7 @@ struct LauncherOverlay: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .accessibilityLabel("Search apps")
 
-            if items.isEmpty {
+            if items.isEmpty && macApps.isEmpty {
                 Text("No matching apps")
                     .foregroundStyle(HomeColors.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -624,6 +634,22 @@ struct LauncherOverlay: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(HomeColors.primaryText)
                     .frame(minHeight: 42)
+                }
+            }
+            if !macApps.isEmpty {
+                ScrollView {
+                    LazyVStack(alignment: .leading) {
+                        ForEach(macApps, id: \.bundleIdentifier) { app in
+                            Button {
+                                workspace.launchApplication(app)
+                            } label: {
+                                Label(app.name, systemImage: app.isRunning ? "macwindow" : "app")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(minHeight: 42)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
         }
@@ -707,16 +733,31 @@ struct TaskSwitcherOverlay: View {
 @MainActor
 struct RemoteSessionFullscreenView: View {
     @ObservedObject var workspace: WorkspaceState
+    @ObservedObject private var mediaClient: NativeWebRTCClient
+    @StateObject private var headPose = HeadPoseTracker()
+    @StateObject private var spatialScene = SpatialSceneState()
     @State private var lastTouch: RemoteTouchPoint?
+    @State private var isHeadsetMode = false
+    @State private var isHeadsetLauncherVisible = false
+    @State private var isKeyboardVisible = false
+    @State private var keyboardText = ""
+
+    init(workspace: WorkspaceState) {
+        self.workspace = workspace
+        _mediaClient = ObservedObject(wrappedValue: workspace.mediaState.webRTCClient)
+    }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
+            if isHeadsetMode {
+                headsetView
+            } else {
             GeometryReader { geometry in
                 ZStack {
                     if workspace.connectionState.isConnected {
-                        NativeWebRTCVideoSurface(videoTrack: workspace.mediaState.webRTCClient.remoteVideoTrack)
+                        NativeWebRTCVideoSurface(videoTrack: mediaClient.remoteVideoTrack)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         sessionProgress
@@ -728,23 +769,133 @@ struct RemoteSessionFullscreenView: View {
                         .onChanged { value in
                             sendTouch(at: value.location, in: geometry.size)
                         }
+                        .onEnded { value in
+                            let mapper = RemoteDisplayCoordinateMapper(remoteSize: workspace.mediaState.displaySize, surfaceSize: geometry.size)
+                            if abs(value.translation.width) < 12, abs(value.translation.height) < 12,
+                               let touch = mapper.map(value.location) {
+                                workspace.click(at: InputPoint(x: touch.remote.x, y: touch.remote.y))
+                            }
+                        }
                 )
             }
             .aspectRatio(remoteAspectRatio, contentMode: .fit)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
+            }
         }
         .overlay(alignment: .top) {
-            sessionBar
+            if !isHeadsetMode { sessionBar }
         }
         .overlay(alignment: .bottom) {
-            sessionFooter
+            if !isHeadsetMode { sessionFooter }
         }
+        .sheet(isPresented: $isKeyboardVisible) {
+            VStack(spacing: 18) {
+                Text("Type on Mac").font(.headline)
+                TextField("Text to enter", text: $keyboardText)
+                    .textFieldStyle(.roundedBorder)
+                Button("Send") {
+                    workspace.sendText(keyboardText)
+                    keyboardText = ""
+                    isKeyboardVisible = false
+                }
+                .disabled(keyboardText.isEmpty)
+            }
+            .padding(24)
+            .presentationDetents([.medium])
+        }
+        .onDisappear { headPose.stop() }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
 #if os(iOS)
         .persistentSystemOverlays(.hidden)
 #endif
+    }
+
+    private var headsetView: some View {
+        SpatialHeadsetView(
+            workspace: workspace,
+            mediaClient: mediaClient,
+            scene: spatialScene
+        ) {
+            isHeadsetMode = false
+        }
+    }
+
+    private func headsetEye(size: CGSize) -> some View {
+        let width = size.width * 0.78
+        let height = min(size.height * 0.68, width / remoteAspectRatio)
+        return ZStack {
+            Color.black
+            // Both eyes see the same WebRTC track. Head pose pans the virtual
+            // screen; a single monoscopic Mac source has no depth parallax.
+            NativeWebRTCVideoSurface(videoTrack: mediaClient.remoteVideoTrack)
+                .frame(width: width, height: height)
+                .background(Color(white: 0.07))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.35)))
+                .offset(x: -headPose.yaw * width * 0.65, y: headPose.pitch * height * 0.65)
+                .onTapGesture { selectAtGaze() }
+
+            Image(systemName: "plus")
+                .font(.system(size: 16, weight: .light))
+                .foregroundStyle(.white)
+                .shadow(color: .black, radius: 3)
+
+            VStack {
+                HStack(spacing: 10) {
+                    Button("Apps") { isHeadsetLauncherVisible.toggle() }
+                    Button("Type") { isKeyboardVisible = true }
+                    Button("Center") { headPose.recenter() }
+                    Button("Exit VR") {
+                        isHeadsetMode = false
+                        headPose.stop()
+                    }
+                }
+                .font(.system(size: 10, weight: .bold))
+                .buttonStyle(.bordered)
+                .padding(.top, 18)
+                Spacer()
+                Button("Select") { selectAtGaze() }
+                    .font(.caption.weight(.bold))
+                    .buttonStyle(.borderedProminent)
+                    .padding(.bottom, 18)
+            }
+
+            if isHeadsetLauncherVisible {
+                VStack(spacing: 8) {
+                    Text("Mac apps").font(.caption.bold())
+                    ScrollView {
+                        ForEach(workspace.applications, id: \.bundleIdentifier) { app in
+                            Button(app.name) {
+                                workspace.launchApplication(app)
+                                isHeadsetLauncherVisible = false
+                            }
+                            .font(.caption)
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    Button("Close") { isHeadsetLauncherVisible = false }
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .padding(12)
+                .frame(width: width, height: height)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            }
+        }
+        .frame(width: size.width, height: size.height)
+        .clipped()
+    }
+
+    private func selectAtGaze() {
+        guard workspace.connectionState.isConnected else { return }
+        let width = workspace.mediaState.displaySize.width
+        let height = workspace.mediaState.displaySize.height
+        // The reticle is fixed at the eye center while the virtual display pans.
+        let x = min(max(0.5 + headPose.yaw * 0.65, 0), 1) * width
+        let y = min(max(0.5 - headPose.pitch * 0.65, 0), 1) * height
+        workspace.click(at: InputPoint(x: x, y: y))
     }
 
     private var remoteAspectRatio: CGFloat {
@@ -781,6 +932,14 @@ struct RemoteSessionFullscreenView: View {
                     .frame(minHeight: 32)
             }
             .buttonStyle(HomeButtonStyle(kind: .danger))
+
+            Button {
+                isHeadsetMode = true
+            } label: {
+                Label("Headset", systemImage: "viewfinder")
+                    .font(.caption.weight(.semibold))
+            }
+            .buttonStyle(HomeButtonStyle(kind: .secondary))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -887,6 +1046,56 @@ struct RemoteSessionFullscreenView: View {
         guard let touch = mapper.map(location) else { return }
         lastTouch = touch
         workspace.sendTouch(touch)
+    }
+}
+
+@MainActor
+private final class HeadPoseTracker: ObservableObject {
+    @Published private(set) var yaw: CGFloat = 0
+    @Published private(set) var pitch: CGFloat = 0
+
+    #if os(iOS)
+    private let motion = CMMotionManager()
+    #endif
+    private var referenceYaw: Double?
+    private var referencePitch: Double?
+
+    func start() {
+        #if os(iOS)
+        guard motion.isDeviceMotionAvailable else { return }
+        referenceYaw = nil
+        referencePitch = nil
+        motion.deviceMotionUpdateInterval = 1.0 / 60
+        motion.startDeviceMotionUpdates(using: .xArbitraryZVertical, to: .main) { [weak self] sample, _ in
+            guard let sample else { return }
+            let sampleYaw = sample.attitude.yaw
+            let samplePitch = sample.attitude.pitch
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if self.referenceYaw == nil {
+                    self.referenceYaw = sampleYaw
+                    self.referencePitch = samplePitch
+                }
+                self.yaw = CGFloat(atan2(sin(sampleYaw - (self.referenceYaw ?? 0)), cos(sampleYaw - (self.referenceYaw ?? 0))))
+                self.pitch = CGFloat(samplePitch - (self.referencePitch ?? 0))
+            }
+        }
+        #endif
+    }
+
+    func recenter() {
+        #if os(iOS)
+        referenceYaw = motion.deviceMotion?.attitude.yaw
+        referencePitch = motion.deviceMotion?.attitude.pitch
+        #endif
+        yaw = 0
+        pitch = 0
+    }
+
+    func stop() {
+        #if os(iOS)
+        motion.stopDeviceMotionUpdates()
+        #endif
     }
 }
 

@@ -97,7 +97,6 @@ private final class MACLandPanelController: NSObject {
     var onStatusItemChanged: (() -> Void)?
 
     private var window: NSPanel?
-    private var eventMonitor: Any?
 
     var isVisible: Bool {
         window?.isVisible == true
@@ -129,21 +128,6 @@ private final class MACLandPanelController: NSObject {
         panel.contentView = NSHostingView(rootView: content)
         self.window = panel
 
-        let monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, self.isVisible else { return event }
-            if event.keyCode == 53 {
-                self.close()
-                return nil
-            }
-            return event
-        }
-        eventMonitor = monitor
-    }
-
-    deinit {
-        if let eventMonitor {
-            NSEvent.removeMonitor(eventMonitor)
-        }
     }
 
     func open(relativeTo button: NSStatusBarButton) {
@@ -457,6 +441,7 @@ private struct HostMenuView: View {
                         HStack(spacing: 8) {
                             ActionButton(title: "Show data", systemImage: "doc.text.magnifyingglass", action: { pendingPairingCode = runtime.pairingCode })
                             ActionButton(title: "Copy data", systemImage: "doc.on.doc.fill", action: runtime.copyPairingPayload)
+                            ActionButton(title: "New code", systemImage: "arrow.clockwise", action: runtime.rotatePairingCode)
                         }
                     }
                 }

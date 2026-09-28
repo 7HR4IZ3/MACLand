@@ -40,7 +40,7 @@ struct InputInjector {
         case .key:
             try injectKey(event)
         case .text:
-            throw InputInjectorError.textInjectionUnavailable
+            try injectText(event)
         }
     }
 
@@ -84,6 +84,25 @@ struct InputInjector {
         cgEvent.post(tap: .cghidEventTap)
     }
 
+    private func injectText(_ event: InputEvent) throws {
+        guard let text = event.text, !text.isEmpty else { return }
+        // CGEvent accepts UTF-16 code units, including surrogate pairs.
+        let units = Array(text.utf16)
+        for chunk in stride(from: 0, to: units.count, by: 20) {
+            let end = min(chunk + 20, units.count)
+            var slice = Array(units[chunk..<end])
+            for down in [true, false] {
+                guard let keyEvent = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: down) else {
+                    throw InputInjectorError.eventCreationFailed
+                }
+                slice.withUnsafeMutableBufferPointer { buffer in
+                    keyEvent.keyboardSetUnicodeString(stringLength: buffer.count, unicodeString: buffer.baseAddress!)
+                }
+                keyEvent.post(tap: .cghidEventTap)
+            }
+        }
+    }
+
     private static func cgButton(for button: MouseButton) -> CGMouseButton {
         switch button {
         case .left: .left
@@ -106,14 +125,12 @@ struct InputInjector {
 enum InputInjectorError: LocalizedError {
     case missingLocation
     case eventCreationFailed
-    case textInjectionUnavailable
     case unsupportedEvent
 
     var errorDescription: String? {
         switch self {
         case .missingLocation: "The input event has no location."
         case .eventCreationFailed: "macOS could not create the input event."
-        case .textInjectionUnavailable: "Text input requires a dedicated keyboard/text channel."
         case .unsupportedEvent: "The input event is not supported by this injector."
         }
     }

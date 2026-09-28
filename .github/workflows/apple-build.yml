@@ -1,0 +1,24 @@
+name: Apple builds
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests-and-iphone:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shared protocol tests
+        run: swift test --package-path Shared/MACLandProtocol
+      - name: iOS package tests
+        run: swift test --package-path iOS/MACLandMobile
+      - name: iOS viewer
+        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandMobile -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+
+  host:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: macOS host
+        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandHost -sdk macosx build CODE_SIGNING_ALLOWED=NO

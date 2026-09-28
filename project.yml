@@ -62,6 +62,7 @@ targets:
         ENABLE_APP_SANDBOX: YES
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_OBJC_BRIDGING_HEADER: MacHost/Sources/MACLandHost/VoidDisplayPrivate/MACLandVoidDisplayBridge.h
+        SWIFT_VERSION: "5.0"
     dependencies:
       - package: WebRTC
     scheme:

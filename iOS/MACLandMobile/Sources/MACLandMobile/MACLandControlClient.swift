@@ -89,6 +89,8 @@ public final class MACLandControlClient: NSObject, ObservableObject {
 
     public var onStateChange: ((MACLandControlClientState) -> Void)?
     public var onDisplayState: ((DisplayStatePayload) -> Void)?
+    public var onAppsList: ((AppsListPayload) -> Void)?
+    public var onWindowsList: ((WindowsListPayload) -> Void)?
     public var onSessionState: ((SessionStatePayload) -> Void)?
 
     private var webSocketTask: URLSessionWebSocketTask?
@@ -97,6 +99,8 @@ public final class MACLandControlClient: NSObject, ObservableObject {
     private var connectionTimeoutTask: Task<Void, Never>?
     private var pairingPayload: PairingQRCodePayload?
     private var currentSessionID: UUID?
+    private var pendingRemoteICE: [MediaICEPayload] = []
+    private var hasRemoteOffer = false
     private var nextSequence: UInt64 = 1
     private var reconnectTask: Task<Void, Never>?
     private let certificatePinStore = CertificatePinStore()
@@ -119,6 +123,10 @@ public final class MACLandControlClient: NSObject, ObservableObject {
     }
 
     public func connect(using pairingPayload: PairingQRCodePayload) throws {
+        guard pairingPayload.schema == "macland-pairing",
+              pairingPayload.expiresAt > Date() else {
+            throw MACLandControlClientError.expiredPairingCode
+        }
         guard let url = Self.webSocketURL(from: pairingPayload.endpoint) else {
             throw MACLandControlClientError.invalidEndpoint(pairingPayload.endpoint)
         }
@@ -159,6 +167,8 @@ public final class MACLandControlClient: NSObject, ObservableObject {
         urlSession?.invalidateAndCancel()
         urlSession = nil
         currentSessionID = nil
+        pendingRemoteICE.removeAll()
+        hasRemoteOffer = false
         webRTCClient.stop()
         if clearPairing {
             pairingPayload = nil
@@ -204,6 +214,25 @@ public final class MACLandControlClient: NSObject, ObservableObject {
         try send(
             kind: .appClose,
             payload: ApplicationCommandPayload(bundleIdentifier: bundleIdentifier)
+        )
+    }
+
+    public func requestWindowsList() throws {
+        try send(kind: .windowsList, payload: WindowsListPayload(windows: []))
+    }
+
+    public func controlWindow(
+        id: String,
+        bundleIdentifier: String,
+        action: WindowCommandAction
+    ) throws {
+        try send(
+            kind: .windowCommand,
+            payload: WindowCommandPayload(
+                windowID: id,
+                bundleIdentifier: bundleIdentifier,
+                action: action
+            )
         )
     }
 
@@ -294,6 +323,12 @@ public final class MACLandControlClient: NSObject, ObservableObject {
             case .displayState:
                 let envelope = try ControlEnvelope<DisplayStatePayload>.decode(from: data, expectedKind: .displayState)
                 onDisplayState?(envelope.payload)
+            case .appsList:
+                let envelope = try ControlEnvelope<AppsListPayload>.decode(from: data, expectedKind: .appsList)
+                onAppsList?(envelope.payload)
+            case .windowsList:
+                let envelope = try ControlEnvelope<WindowsListPayload>.decode(from: data, expectedKind: .windowsList)
+                onWindowsList?(envelope.payload)
             case .mediaOffer:
                 let envelope = try ControlEnvelope<MediaOfferPayload>.decode(from: data, expectedKind: .mediaOffer)
                 handleMediaOffer(envelope)
@@ -315,12 +350,22 @@ public final class MACLandControlClient: NSObject, ObservableObject {
     }
 
     private func handleMediaOffer(_ envelope: ControlEnvelope<MediaOfferPayload>) {
+        if currentSessionID != envelope.payload.sessionID {
+            pendingRemoteICE.removeAll()
+        }
         currentSessionID = envelope.payload.sessionID
+        hasRemoteOffer = false
 #if canImport(WebRTC) && !SWIFT_PACKAGE
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
                 let answer = try await webRTCClient.applyRemoteOffer(sdp: envelope.payload.sdp)
+                hasRemoteOffer = true
+                let candidates = pendingRemoteICE
+                pendingRemoteICE.removeAll()
+                for candidate in candidates {
+                    try await applyRemoteICE(candidate)
+                }
                 try send(
                     kind: .mediaAnswer,
                     payload: MediaAnswerPayload(
@@ -342,19 +387,30 @@ public final class MACLandControlClient: NSObject, ObservableObject {
 
     private func handleMediaICE(_ payload: MediaICEPayload) {
 #if canImport(WebRTC) && !SWIFT_PACKAGE
-        guard let mLineIndex = payload.sdpMLineIndex else { return }
+        guard payload.sessionID == currentSessionID else { return }
+        guard hasRemoteOffer else {
+            pendingRemoteICE.append(payload)
+            return
+        }
         Task { @MainActor [weak self] in
             guard let self else { return }
-            try? await webRTCClient.addRemoteICECandidate(
-                sdp: payload.candidate,
-                sdpMLineIndex: mLineIndex,
-                sdpMid: payload.sdpMid
-            )
+            try? await applyRemoteICE(payload)
         }
 #else
         _ = payload
 #endif
     }
+
+#if canImport(WebRTC) && !SWIFT_PACKAGE
+    private func applyRemoteICE(_ payload: MediaICEPayload) async throws {
+        guard let mLineIndex = payload.sdpMLineIndex else { return }
+        try await webRTCClient.addRemoteICECandidate(
+            sdp: payload.candidate,
+            sdpMLineIndex: mLineIndex,
+            sdpMid: payload.sdpMid
+        )
+    }
+#endif
 
     private func configureWebRTCICEForwarding() {
 #if canImport(WebRTC) && !SWIFT_PACKAGE
@@ -422,11 +478,13 @@ public final class MACLandControlClient: NSObject, ObservableObject {
 public enum MACLandControlClientError: LocalizedError, Equatable {
     case invalidEndpoint(String)
     case notConnected
+    case expiredPairingCode
 
     public var errorDescription: String? {
         switch self {
         case let .invalidEndpoint(endpoint): "The pairing endpoint is invalid: " + endpoint
         case .notConnected: "The secure MACLand control channel is not connected."
+        case .expiredPairingCode: "This pairing code has expired. Copy fresh pairing data from the Mac."
         }
     }
 }

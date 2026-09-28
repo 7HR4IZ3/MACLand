@@ -174,12 +174,13 @@ final class ThirdPartyDisplayProvider: RemoteDisplayProvider {
     }
 
     init(
-        driver: ThirdPartyDisplayDriverAdapter = UnconfiguredThirdPartyDisplayDriverAdapter(),
-        inventory: ActiveDisplayInventory = CoreGraphicsDisplayInventory()
+        driver: ThirdPartyDisplayDriverAdapter? = nil,
+        inventory: ActiveDisplayInventory? = nil
     ) {
-        self.identifier = driver.identifier
-        self.driver = driver
-        self.inventory = inventory
+        let resolvedDriver = driver ?? UnconfiguredThirdPartyDisplayDriverAdapter()
+        self.identifier = resolvedDriver.identifier
+        self.driver = resolvedDriver
+        self.inventory = inventory ?? CoreGraphicsDisplayInventory()
     }
 
     func refresh() {
