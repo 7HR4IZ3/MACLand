@@ -23,6 +23,7 @@
 		540C9CD9BD9D2F163FE36E65 /* RemoteDisplayProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCC2CE2652C09E618DA72CB /* RemoteDisplayProviderTests.swift */; };
 		62D6A8718428C19C0C2DCF8F /* NativeWebRTCSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0C362AA88DE87BFB89CF77 /* NativeWebRTCSurface.swift */; };
 		A118D0F79E8D4D49B404A001 /* SpatialHeadsetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A118D0F79E8D4D49B404A002 /* SpatialHeadsetView.swift */; };
+		A118D0F79E8D4D49B404A003 /* CardboardLens.metal in Sources */ = {isa = PBXBuildFile; fileRef = A118D0F79E8D4D49B404A004 /* CardboardLens.metal */; };
 		66993E4E981E0721BEC33194 /* MACLandVoidDisplayBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42100D61BE386FF82F86A849 /* MACLandVoidDisplayBridge.m */; };
 		67C32F79302744B4AAEA444B /* ProtocolVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6CED1DD3C3A334C4014A537 /* ProtocolVersion.swift */; };
 		6E4C1F237B2B4D79440C0C1C /* LaunchAtLoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78D340370DE58F5A3D9C3F07 /* LaunchAtLoginController.swift */; };
@@ -116,6 +117,7 @@
 		F2FCB4AC41381D64AB17B925 /* ApplicationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationWindowController.swift; sourceTree = "<group>"; };
 		FAC81DE846282CEF3B1FF6AE /* MACLandHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACLandHomeView.swift; sourceTree = "<group>"; };
 		A118D0F79E8D4D49B404A002 /* SpatialHeadsetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialHeadsetView.swift; sourceTree = "<group>"; };
+		A118D0F79E8D4D49B404A004 /* CardboardLens.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = CardboardLens.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -220,6 +222,7 @@
 				818DD37F050AC13E7DF932FE /* NativeWebRTCClient.swift */,
 				DD0C362AA88DE87BFB89CF77 /* NativeWebRTCSurface.swift */,
 				A118D0F79E8D4D49B404A002 /* SpatialHeadsetView.swift */,
+				A118D0F79E8D4D49B404A004 /* CardboardLens.metal */,
 				C2433E9CD4F787DB7AE3F283 /* PackageProtocolCompatibility.swift */,
 				72E47ED72A94EF91E46C3AB2 /* WorkspaceState.swift */,
 			);
@@ -483,6 +486,7 @@
 				15E9064EFC340D4CCC4D87B2 /* NativeWebRTCClient.swift in Sources */,
 				62D6A8718428C19C0C2DCF8F /* NativeWebRTCSurface.swift in Sources */,
 				A118D0F79E8D4D49B404A001 /* SpatialHeadsetView.swift in Sources */,
+				A118D0F79E8D4D49B404A003 /* CardboardLens.metal in Sources */,
 				AB0B855E509634F17460273D /* PackageProtocolCompatibility.swift in Sources */,
 				954785B8279A5454A35ADA7D /* Payloads.swift in Sources */,
 				67C32F79302744B4AAEA444B /* ProtocolVersion.swift in Sources */,

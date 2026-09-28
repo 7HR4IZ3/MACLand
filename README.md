@@ -6,7 +6,7 @@ MACLand is an iPhone spatial desktop shell for controlling a Mac through a dedic
 
 The project now contains:
 
-- a native SwiftUI iOS shell with launcher, dock, task switching, settings, pairing state, and coordinate mapping;
+- a native SwiftUI iOS shell with a persistent spatial scene, two-eye GPU lens correction, head-gaze dock, launcher, remote Mac window switcher, settings, pairing state, and coordinate mapping;
 - a native menu-bar macOS host with application discovery, permission onboarding, LAN Bonjour advertisement, typed protocol routing, and Accessibility input primitives;
 - a persistent dark menu-bar utility panel with section navigation for displays, media, apps, controls, and settings;
 - a shared versioned JSON control protocol with request IDs, sequence numbers, capability negotiation, permission state, app commands, display commands, clipboard, media negotiation, and structured errors;
@@ -16,7 +16,7 @@ The supported public virtual-display gate is still blocked: the installed macOS 
 
 The current integration is not yet device-validated end-to-end. The host has a TLS WebSocket listener, pairing codes that expire after ten minutes, bidirectional ICE signaling, typed command routing, ScreenCaptureKit display capture, Unicode text and click injection, and a native WebRTC M150 sender. The iOS client has Bonjour discovery, pinned WSS trust evaluation, signaling, reconnect handling, a side-by-side viewer with CoreMotion head tracking and gaze selection, a Mac app launcher, a native WebRTC surface, and dynamic display geometry.
 
-Tap **Headset** in the remote session, rotate the phone to landscape, and place it in a compatible phone VR holder. Each eye shows the same Mac video track. Use **Center** to recenter, **Select** or a screen-tapping viewer button to click, **Apps** to open a Mac app, and **Type** to send text. Remove the phone from the holder to use the system keyboard. This is an app-based spatial shell over macOS, not a replacement for iOS or macOS. The display is monoscopic and has no viewer-specific lens distortion calibration or spatial window compositor yet; see [headset limitations](docs/CARDBOARD_SPATIAL_OS.md).
+Tap **Headset** in the remote session, rotate the phone to landscape, and place it in a compatible phone VR holder. Look down at the spatial dock and use a screen-tapping viewer button or configurable dwell selection to open apps, switch Mac windows, recenter, tune the display, or exit. The Metal compositor applies adjustable per-eye lens pre-warp and comfort masking. Remove the phone from the holder to use the system keyboard. The Mac video remains monoscopic and manual lens settings do not yet use viewer QR calibration; see [headset limitations](docs/CARDBOARD_SPATIAL_OS.md) and the [VisionOS-inspired roadmap](docs/VISIONOS_ROADMAP.md).
 
 The host TLS listener intentionally fails closed until a certificate and private-key identity is installed in the login keychain under `com.thraize.macland.host.tls`. Pairing approval is currently an in-memory development control; use **New code** after ten minutes, then copy fresh pairing JSON into iOS Settings. A QR scanner and persistent device revocation UI are still pending. System audio capture is exposed by the ScreenCaptureKit layer, but audio track publishing is not yet enabled in the WebRTC sender. Terminal control remains disabled by default.
 

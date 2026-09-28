@@ -17,7 +17,7 @@ let package = Package(
     targets: [
         .target(
             name: "MACLandMobile",
-            exclude: ["MACLandMobileApp.swift"]
+            exclude: ["MACLandMobileApp.swift", "CardboardLens.metal"]
         ),
         .testTarget(
             name: "MACLandMobileTests",
