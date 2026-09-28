@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  tests-and-iphone:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -13,7 +13,12 @@ jobs:
         run: swift test --package-path Shared/MACLandProtocol
       - name: iOS package tests
         run: swift test --package-path iOS/MACLandMobile
-      - name: macOS host
-        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandHost -sdk macosx build CODE_SIGNING_ALLOWED=NO
       - name: iOS viewer
         run: xcodebuild -project MACLand.xcodeproj -scheme MACLandMobile -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+
+  host:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: macOS host
+        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandHost -sdk macosx build CODE_SIGNING_ALLOWED=NO

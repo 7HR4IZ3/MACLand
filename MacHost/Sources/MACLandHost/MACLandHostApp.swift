@@ -97,7 +97,6 @@ private final class MACLandPanelController: NSObject {
     var onStatusItemChanged: (() -> Void)?
 
     private var window: NSPanel?
-    private var eventMonitor: Any?
 
     var isVisible: Bool {
         window?.isVisible == true
@@ -132,16 +131,6 @@ private final class MACLandPanelController: NSObject {
     }
 
     func open(relativeTo button: NSStatusBarButton) {
-        if eventMonitor == nil {
-            eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-                guard let self, self.isVisible else { return event }
-                if event.keyCode == 53 {
-                    self.close()
-                    return nil
-                }
-                return event
-            }
-        }
         guard let window, let screen = button.window?.screen ?? NSScreen.main else { return }
 
         let desiredWidth: CGFloat = 392
@@ -162,10 +151,6 @@ private final class MACLandPanelController: NSObject {
     }
 
     func close() {
-        if let eventMonitor {
-            NSEvent.removeMonitor(eventMonitor)
-            self.eventMonitor = nil
-        }
         guard let window else { return }
         window.orderOut(nil)
     }
