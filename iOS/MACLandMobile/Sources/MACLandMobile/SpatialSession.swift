@@ -84,7 +84,7 @@ final class SpatialSession: ObservableObject {
         activeID = hit?.id
         if hit?.id != blockedControl { blockedControl = nil }
         guard let hit else { dwell.reset(); return }
-        if hit.id == blockedControl { dwell.reset(); return }
+        if hit.id == blockedControl || hit.id == "status" { dwell.reset(); return }
         if hit.id == "display" && (!armed || !usable) { dwell.reset(); return }
         let stablePoint = hit.id == "display" ? SIMD2<Float>(hit.point.x, hit.point.y) : .zero
         let activated = dwell.update(target: hit.id, point: stablePoint, time: time, duration: dwellDuration)
@@ -101,7 +101,9 @@ final class SpatialSession: ObservableObject {
     private func rebuild() {
         let aspect = Float(workspace.mediaState.displaySize.width / max(1, workspace.mediaState.displaySize.height))
         let height = min(1.45, 2.4 / max(0.1, aspect)) * scale
-        surfaces = []
+        let connectionStatus = workspace.connectionState.isConnected ? status : workspace.connectionState.label
+        surfaces = [SpatialSurface(id: "status", center: SIMD3(0, 1.36, -2.2),
+            size: SIMD2(1.8, 0.23), title: error ?? connectionStatus, symbol: "")]
         if !launcher {
             surfaces.append(SpatialSurface(id: "display", center: SIMD3(0, 0.15, -2.2),
                 size: SIMD2(height * aspect, height), title: workspace.mediaState.connectionState.label,
@@ -146,7 +148,7 @@ final class SpatialSession: ObservableObject {
                 if armed { pause() }
                 else if usable { armed = true; status = "Gaze input active" }
                 else { status = "Wait for a live Mac stream" }
-            case "apps": launcher.toggle(); armed = false; appPage = 0; try workspace.controlClient.requestApplications()
+            case "apps": launcher.toggle(); armed = false; status = "Input paused"; appPage = 0; try workspace.controlClient.requestApplications()
             case "mode": mode = (mode + 1) % 3
             case "recenter": recenter(); pause()
             case "exit": stop(); exitRequested = true

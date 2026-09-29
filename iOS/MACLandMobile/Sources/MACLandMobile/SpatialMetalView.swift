@@ -214,14 +214,19 @@ struct SpatialMetalView: UIViewRepresentable {
                         .withTintColor(.white, renderingMode: .alwaysOriginal)
                     icon?.draw(in: CGRect(x: 232, y: y + 32, width: 48, height: 48))
                     let style = NSMutableParagraphStyle(); style.alignment = .center; style.lineBreakMode = .byTruncatingTail
-                    (surface.title as NSString).draw(in: CGRect(x: 12, y: y + 110, width: 488, height: 48),
+                    (surface.title as NSString).draw(in: CGRect(x: 12, y: y + (surface.symbol.isEmpty ? 72 : 110), width: 488, height: 48),
                         withAttributes: [.font: UIFont.systemFont(ofSize: 29, weight: .medium), .foregroundColor: UIColor.white,
                                          .paragraphStyle: style])
                 }
             }
             guard let cgImage = image.cgImage else { return nil }
-            return try? MTKTextureLoader(device: device).newTexture(cgImage: cgImage,
-                options: [.SRGB: false, .origin: MTKTextureLoader.Origin.topLeft])
+            do {
+                return try MTKTextureLoader(device: device).newTexture(cgImage: cgImage,
+                    options: [.SRGB: false, .origin: MTKTextureLoader.Origin.topLeft.rawValue])
+            } catch {
+                session.reportRenderError("Could not create workspace controls: " + error.localizedDescription)
+                return nil
+            }
         }
     }
 }
