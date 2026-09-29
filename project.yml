@@ -27,6 +27,8 @@ targets:
         INFOPLIST_FILE: iOS/MACLandMobile/Info.plist
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
+        SWIFT_OBJC_BRIDGING_HEADER: iOS/MACLandMobile/Sources/MACLandMobile/Cardboard/MACLandMobile-Bridging-Header.h
+        CLANG_CXX_LANGUAGE_STANDARD: c++17
         CODE_SIGN_STYLE: Automatic
     dependencies:
       - package: WebRTC

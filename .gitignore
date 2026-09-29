@@ -4,3 +4,7 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 .DS_Store
+
+.cardboard-build/
+iOS/ThirdParty/Cardboard/
+project.cardboard.yml

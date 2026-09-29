@@ -35,7 +35,11 @@ EOF
 
 generate_project() {
     if command -v xcodegen >/dev/null 2>&1; then
-        (cd "$PROJECT_ROOT" && xcodegen generate >/dev/null)
+        if [ -f "$PROJECT_ROOT/project.cardboard.yml" ]; then
+            (cd "$PROJECT_ROOT" && xcodegen generate --spec project.cardboard.yml >/dev/null)
+        else
+            (cd "$PROJECT_ROOT" && xcodegen generate >/dev/null)
+        fi
     elif [ ! -d "$PROJECT" ]; then
         printf '%s\n' "xcodegen is required because MACLand.xcodeproj is not present." >&2
         exit 1

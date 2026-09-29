@@ -79,6 +79,7 @@ public final class WorkspaceState: ObservableObject {
     @Published public var isLauncherPresented = false
     @Published public var isTaskSwitcherPresented = false
     @Published public var isRemoteFullscreen = false
+    @Published public var isSpatialPresented = false
     @Published public var launcherQuery = ""
     @Published public var pairingPayloadJSON = ""
     public let controlClient: MACLandControlClient

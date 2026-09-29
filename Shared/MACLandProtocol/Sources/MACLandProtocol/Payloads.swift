@@ -478,6 +478,7 @@ public struct InputEvent: Codable, Equatable, Sendable {
     public var kind: InputEventKind
     public var timestamp: UInt64
     public var location: InputPoint?
+    public var clickCount: Int?
     public var button: MouseButton?
     public var pressed: Bool?
     public var keyCode: UInt16?
@@ -492,8 +493,10 @@ public struct InputEvent: Codable, Equatable, Sendable {
         pressed: Bool? = nil,
         keyCode: UInt16? = nil,
         text: String? = nil,
-        modifiers: [InputModifier] = []
+        modifiers: [InputModifier] = [],
+        clickCount: Int? = nil
     ) {
+        self.clickCount = clickCount
         self.kind = kind
         self.timestamp = timestamp
         self.location = location

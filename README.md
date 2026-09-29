@@ -1,6 +1,8 @@
 # MACLand
 
-MACLand is an iOS-first phone desktop shell for controlling a Mac through a dedicated remote display.
+MACLand is evolving into an iPhone spatial desktop powered by a Mac, with head-directed gaze controls for a Cardboard-style viewer. The Mac runs applications; the iPhone renders the workspace locally.
+
+See [the spatial redesign](docs/SPATIAL_WORKSPACE.md) for the architecture, interaction model, implementation stages and device acceptance checks. The headset icon in a remote session opens a Metal spatial workspace with head tracking, gaze dwell controls and a Mac app launcher. Run `bash scripts/setup-cardboard.sh` on your Mac to build the pinned Cardboard SDK and enable viewer QR calibration and lens distortion. Builds without the SDK remain explicitly uncalibrated stereo previews.
 
 ## Current status
 

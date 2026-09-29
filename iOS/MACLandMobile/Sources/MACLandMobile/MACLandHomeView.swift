@@ -744,6 +744,11 @@ struct RemoteSessionFullscreenView: View {
         .preferredColorScheme(.dark)
 #if os(iOS)
         .persistentSystemOverlays(.hidden)
+#if !SWIFT_PACKAGE
+        .fullScreenCover(isPresented: $workspace.isSpatialPresented) {
+            SpatialWorkspaceView(workspace: workspace)
+        }
+#endif
 #endif
     }
 
@@ -766,6 +771,11 @@ struct RemoteSessionFullscreenView: View {
 
             Spacer()
 
+#if os(iOS) && !SWIFT_PACKAGE
+            Button { workspace.isSpatialPresented = true } label: {
+                Image(systemName: "vision.pro")
+            }
+#endif
             Text(sessionStatus)
                 .font(.caption)
                 .foregroundStyle(HomeColors.secondaryText)

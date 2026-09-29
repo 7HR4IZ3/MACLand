@@ -16,6 +16,10 @@
 	<string>0.1</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan your Cardboard viewer QR code to calibrate the lenses.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>MACLand uses head movement to aim within your spatial workspace.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_macland._tcp</string>

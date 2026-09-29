@@ -21,6 +21,7 @@ public enum ControlMessageKind: String, Codable, Sendable {
     case sessionStart = "session.start"
     case sessionState = "session.state"
     case displayState = "display.state"
+    case appsList = "apps.list"
     case appLaunch = "app.launch"
     case appFocus = "app.focus"
     case appClose = "app.close"
@@ -143,8 +144,18 @@ public enum InputEventKind: String, Codable, Sendable { case pointerMove = "poin
 public enum MouseButton: String, Codable, Sendable { case left; case right; case middle }
 public enum InputModifier: String, Codable, Sendable { case shift; case control; case option; case command; case capsLock = "caps_lock" }
 public struct InputPoint: Codable, Equatable, Sendable { public var x: Double; public var y: Double; public init(x: Double, y: Double) { self.x = x; self.y = y } }
-public struct InputEvent: Codable, Equatable, Sendable { public var kind: InputEventKind; public var timestamp: UInt64; public var location: InputPoint?; public var button: MouseButton?; public var pressed: Bool?; public var keyCode: UInt16?; public var text: String?; public var modifiers: [InputModifier]; public init(kind: InputEventKind, timestamp: UInt64, location: InputPoint? = nil, button: MouseButton? = nil, pressed: Bool? = nil, keyCode: UInt16? = nil, text: String? = nil, modifiers: [InputModifier] = []) { self.kind = kind; self.timestamp = timestamp; self.location = location; self.button = button; self.pressed = pressed; self.keyCode = keyCode; self.text = text; self.modifiers = modifiers } }
+public struct InputEvent: Codable, Equatable, Sendable { public var kind: InputEventKind; public var timestamp: UInt64; public var location: InputPoint?; public var clickCount: Int?; public var button: MouseButton?; public var pressed: Bool?; public var keyCode: UInt16?; public var text: String?; public var modifiers: [InputModifier]; public init(kind: InputEventKind, timestamp: UInt64, location: InputPoint? = nil, button: MouseButton? = nil, pressed: Bool? = nil, keyCode: UInt16? = nil, text: String? = nil, modifiers: [InputModifier] = [], clickCount: Int? = nil) { self.clickCount = clickCount; self.kind = kind; self.timestamp = timestamp; self.location = location; self.button = button; self.pressed = pressed; self.keyCode = keyCode; self.text = text; self.modifiers = modifiers } }
 public struct InputBatchPayload: Codable, Equatable, Sendable { public var batchID: UUID; public var events: [InputEvent]; public init(batchID: UUID, events: [InputEvent]) { self.batchID = batchID; self.events = events } }
+public struct ApplicationDescriptor: Codable, Equatable, Sendable {
+    public var bundleIdentifier: String
+    public var name: String
+    public var isRunning: Bool
+    public var processID: Int32?
+}
+public struct AppsListPayload: Codable, Sendable {
+    public var applications: [ApplicationDescriptor]
+    public init(applications: [ApplicationDescriptor]) { self.applications = applications }
+}
 public struct ApplicationCommandPayload: Codable, Equatable, Sendable { public var bundleIdentifier: String; public var displayID: UUID?; public init(bundleIdentifier: String, displayID: UUID? = nil) { self.bundleIdentifier = bundleIdentifier; self.displayID = displayID } }
 
 public struct MediaSessionDescriptionPayload: Codable, Equatable, Sendable { public var sessionID: UUID; public var sdp: String; public var codecs: [String]; public var width: Int; public var height: Int; public var frameRate: Int; public init(sessionID: UUID, sdp: String, codecs: [String] = [], width: Int, height: Int, frameRate: Int) { self.sessionID = sessionID; self.sdp = sdp; self.codecs = codecs; self.width = width; self.height = height; self.frameRate = frameRate } }

@@ -79,6 +79,7 @@ public final class MACLandBonjourDiscovery: ObservableObject {
 @MainActor
 public final class MACLandControlClient: NSObject, ObservableObject {
     @Published public private(set) var state: MACLandControlClientState = .idle
+    @Published public private(set) var applications: [ApplicationDescriptor] = []
     @Published public private(set) var hostName = ""
     @Published public private(set) var pairingCode = ""
     @Published public private(set) var lastError: String?
@@ -148,6 +149,7 @@ public final class MACLandControlClient: NSObject, ObservableObject {
     }
 
     public func disconnect(clearPairing: Bool = true) {
+        applications = []
         receiveTask?.cancel()
         receiveTask = nil
         reconnectTask?.cancel()
@@ -176,6 +178,10 @@ public final class MACLandControlClient: NSObject, ObservableObject {
             guard !Task.isCancelled else { return }
             try? self?.connect(using: pairingPayload)
         }
+    }
+
+    public func requestApplications() throws {
+        try send(kind: .appsList, payload: AppsListPayload(applications: []))
     }
 
     public func sendInput(events: [InputEvent]) throws {
@@ -294,6 +300,9 @@ public final class MACLandControlClient: NSObject, ObservableObject {
             case .displayState:
                 let envelope = try ControlEnvelope<DisplayStatePayload>.decode(from: data, expectedKind: .displayState)
                 onDisplayState?(envelope.payload)
+            case .appsList:
+                let envelope = try ControlEnvelope<AppsListPayload>.decode(from: data, expectedKind: .appsList)
+                applications = envelope.payload.applications.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
             case .mediaOffer:
                 let envelope = try ControlEnvelope<MediaOfferPayload>.decode(from: data, expectedKind: .mediaOffer)
                 handleMediaOffer(envelope)

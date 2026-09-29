@@ -50,6 +50,14 @@
 		F6AC037212A2E28F9FD8F8C5 /* CoordinateMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94C4C40FD6BB1795217D450 /* CoordinateMappingTests.swift */; };
 		F7B95A1074A67B1762A385C4 /* HostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC049664F6B908AA872DB827 /* HostTests.swift */; };
 		F93C003DA6D5FA427472F4D1 /* HostRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610B05BC854563F0C00ECD3C /* HostRuntime.swift */; };
+		A01100000000000000000001 /* SpatialWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01100000000000000000002 /* SpatialWorkspaceView.swift */; };
+		F74B196E44099B8CC901FFFB /* SpatialInteraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B208732EC0F038FD334B0CD2 /* SpatialInteraction.swift */; };
+		2EB57712F50974C41D2EC225 /* SpatialSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B52342329A759475CC4BBD /* SpatialSession.swift */; };
+		808D244AA9C5746BAB0CC0F3 /* SpatialMetalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38C46639B15EBF2E362A74D /* SpatialMetalView.swift */; };
+		0FD5936E57CF266EB3E07B1F /* SpatialVideoMailbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663239855F23ACABC2E60FF4 /* SpatialVideoMailbox.swift */; };
+		C24429F83D3F7669AE0555D6 /* SpatialShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 49A25079047B174C415B4900 /* SpatialShaders.metal */; };
+		9E979A59E58C9980AFC634F8 /* MACLandCardboard.mm in Sources */ = {isa = PBXBuildFile; fileRef = B8DCDACCF10E6ACCF3C068CA /* MACLandCardboard.mm */; };
+		99E7C443DACF710E571386EE /* SpatialInteractionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DA982BCE947EEC1E762972E /* SpatialInteractionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +122,16 @@
 		EE09918AB29BF56571FA0147 /* PermissionCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCenter.swift; sourceTree = "<group>"; };
 		F2FCB4AC41381D64AB17B925 /* ApplicationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationWindowController.swift; sourceTree = "<group>"; };
 		FAC81DE846282CEF3B1FF6AE /* MACLandHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MACLandHomeView.swift; sourceTree = "<group>"; };
+		A01100000000000000000002 /* SpatialWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialWorkspaceView.swift; sourceTree = "<group>"; };
+		B208732EC0F038FD334B0CD2 /* SpatialInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpatialInteraction.swift"; sourceTree = "<group>"; };
+		B4B52342329A759475CC4BBD /* SpatialSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpatialSession.swift"; sourceTree = "<group>"; };
+		F38C46639B15EBF2E362A74D /* SpatialMetalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpatialMetalView.swift"; sourceTree = "<group>"; };
+		663239855F23ACABC2E60FF4 /* SpatialVideoMailbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpatialVideoMailbox.swift"; sourceTree = "<group>"; };
+		49A25079047B174C415B4900 /* SpatialShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = "SpatialShaders.metal"; sourceTree = "<group>"; };
+		B8DCDACCF10E6ACCF3C068CA /* MACLandCardboard.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Cardboard/MACLandCardboard.mm"; sourceTree = "<group>"; };
+		0A4118F6FF49EB5343F5FD21 /* MACLandCardboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Cardboard/MACLandCardboard.h"; sourceTree = "<group>"; };
+		9DDBC6DF537C652A5B410685 /* MACLandMobile-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Cardboard/MACLandMobile-Bridging-Header.h"; sourceTree = "<group>"; };
+		6DA982BCE947EEC1E762972E /* SpatialInteractionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SpatialInteractionTests.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,6 +231,15 @@
 				32864011DDE02DA896A7ED75 /* CoordinateMapping.swift */,
 				3775F0B164E1E2AB44852544 /* MACLandControlClient.swift */,
 				2A564255B1E77EF12520B8AC /* MACLandDesktopView.swift */,
+				A01100000000000000000002 /* SpatialWorkspaceView.swift */,
+				9DDBC6DF537C652A5B410685 /* MACLandMobile-Bridging-Header.h */,
+				0A4118F6FF49EB5343F5FD21 /* MACLandCardboard.h */,
+				B8DCDACCF10E6ACCF3C068CA /* MACLandCardboard.mm */,
+				49A25079047B174C415B4900 /* SpatialShaders.metal */,
+				663239855F23ACABC2E60FF4 /* SpatialVideoMailbox.swift */,
+				F38C46639B15EBF2E362A74D /* SpatialMetalView.swift */,
+				B4B52342329A759475CC4BBD /* SpatialSession.swift */,
+				B208732EC0F038FD334B0CD2 /* SpatialInteraction.swift */,
 				FAC81DE846282CEF3B1FF6AE /* MACLandHomeView.swift */,
 				2E01E6FFA605931EAEFC4AF5 /* MACLandMobileApp.swift */,
 				818DD37F050AC13E7DF932FE /* NativeWebRTCClient.swift */,
@@ -303,6 +330,7 @@
 			children = (
 				E94C4C40FD6BB1795217D450 /* CoordinateMappingTests.swift */,
 				35DDBF29F04F349D9D68E78F /* WorkspaceStateTests.swift */,
+				6DA982BCE947EEC1E762972E /* SpatialInteractionTests.swift */,
 			);
 			path = MACLandMobileTests;
 			sourceTree = "<group>";
@@ -464,6 +492,7 @@
 			files = (
 				F6AC037212A2E28F9FD8F8C5 /* CoordinateMappingTests.swift in Sources */,
 				C6BB3149FDF88BB0847B6CD4 /* WorkspaceStateTests.swift in Sources */,
+				99E7C443DACF710E571386EE /* SpatialInteractionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -475,6 +504,13 @@
 				E4193FBC965ED6FA4EA61E46 /* CoordinateMapping.swift in Sources */,
 				341C571A35737E2C4162A559 /* MACLandControlClient.swift in Sources */,
 				7F5B0672EF99CAB230E95355 /* MACLandDesktopView.swift in Sources */,
+				A01100000000000000000001 /* SpatialWorkspaceView.swift in Sources */,
+				9E979A59E58C9980AFC634F8 /* MACLandCardboard.mm in Sources */,
+				C24429F83D3F7669AE0555D6 /* SpatialShaders.metal in Sources */,
+				0FD5936E57CF266EB3E07B1F /* SpatialVideoMailbox.swift in Sources */,
+				808D244AA9C5746BAB0CC0F3 /* SpatialMetalView.swift in Sources */,
+				2EB57712F50974C41D2EC225 /* SpatialSession.swift in Sources */,
+				F74B196E44099B8CC901FFFB /* SpatialInteraction.swift in Sources */,
 				C692E9C25F4B9FD46FCEA216 /* MACLandHomeView.swift in Sources */,
 				E47CF6C9ACE1A66F10227DF0 /* MACLandMobileApp.swift in Sources */,
 				15E9064EFC340D4CCC4D87B2 /* NativeWebRTCClient.swift in Sources */,
@@ -686,6 +722,8 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.mobile;
+				SWIFT_OBJC_BRIDGING_HEADER = "iOS/MACLandMobile/Sources/MACLandMobile/Cardboard/MACLandMobile-Bridging-Header.h";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -802,6 +840,8 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.thraize.macland.mobile;
+				SWIFT_OBJC_BRIDGING_HEADER = "iOS/MACLandMobile/Sources/MACLandMobile/Cardboard/MACLandMobile-Bridging-Header.h";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";

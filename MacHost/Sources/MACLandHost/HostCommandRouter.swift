@@ -53,7 +53,11 @@ struct InputInjector {
         case .pointerMove:
             type = .mouseMoved
         case .pointerButton:
-            type = event.pressed == true ? .leftMouseDown : .leftMouseUp
+            switch event.button ?? .left {
+            case .left: type = event.pressed == true ? .leftMouseDown : .leftMouseUp
+            case .right: type = event.pressed == true ? .rightMouseDown : .rightMouseUp
+            case .middle: type = event.pressed == true ? .otherMouseDown : .otherMouseUp
+            }
         case .scroll:
             type = .scrollWheel
         case .key, .text:
@@ -67,6 +71,9 @@ struct InputInjector {
             mouseButton: button
         ) else { throw InputInjectorError.eventCreationFailed }
 
+        if event.kind == .pointerButton {
+            cgEvent.setIntegerValueField(.mouseEventClickState, value: Int64(min(2, max(1, event.clickCount ?? 1))))
+        }
         cgEvent.post(tap: .cghidEventTap)
     }
 

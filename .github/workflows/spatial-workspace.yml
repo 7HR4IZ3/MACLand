@@ -1,0 +1,28 @@
+name: Spatial workspace
+on:
+  push:
+    branches: [codex/spatial-cardboard-workspace]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apple-build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Protocol tests
+        run: swift test --package-path Shared/MACLandProtocol
+      - name: Mobile model tests
+        run: swift test --package-path iOS/MACLandMobile
+      - name: Build stereo preview
+        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandMobile -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Build host
+        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandHost -sdk macosx CODE_SIGNING_ALLOWED=NO build
+      - name: Install Cardboard build tools
+        run: brew install cocoapods xcodegen
+      - name: Build pinned Cardboard SDK
+        run: bash scripts/setup-cardboard.sh
+      - name: Build calibrated iPhone app
+        run: xcodebuild -project MACLand.xcodeproj -scheme MACLandMobile -sdk iphoneos -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build

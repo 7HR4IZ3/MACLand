@@ -202,3 +202,16 @@ final class MACLandProtocolTests: XCTestCase {
         }
     }
 }
+
+final class SpatialInputCompatibilityTests: XCTestCase {
+    func testLegacyInputWithoutClickCountDecodes() throws {
+        let json = #"{"kind":"pointer.button","timestamp":1,"button":"left","pressed":true,"modifiers":[]}"#
+        let event = try MACLandJSON.makeDecoder().decode(InputEvent.self, from: Data(json.utf8))
+        XCTAssertNil(event.clickCount)
+    }
+    func testDoubleClickCountRoundTrips() throws {
+        let event = InputEvent(kind: .pointerButton, timestamp: 1, button: .left, pressed: true, clickCount: 2)
+        let data = try MACLandJSON.makeEncoder().encode(event)
+        XCTAssertEqual(try MACLandJSON.makeDecoder().decode(InputEvent.self, from: data).clickCount, 2)
+    }
+}
