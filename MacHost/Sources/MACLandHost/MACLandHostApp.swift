@@ -94,10 +94,13 @@ private enum MACLandMenuBarIcon {
 
 @MainActor
 private final class MACLandPanelController: NSObject {
+    private struct MonitorToken: @unchecked Sendable {
+        let value: Any
+    }
     var onStatusItemChanged: (() -> Void)?
 
     private var window: NSPanel?
-    private var eventMonitor: Any?
+    private var eventMonitor: MonitorToken?
 
     var isVisible: Bool {
         window?.isVisible == true
@@ -137,12 +140,12 @@ private final class MACLandPanelController: NSObject {
             }
             return event
         }
-        eventMonitor = monitor
+        eventMonitor = MonitorToken(value: monitor)
     }
 
     deinit {
         if let eventMonitor {
-            NSEvent.removeMonitor(eventMonitor)
+            NSEvent.removeMonitor(eventMonitor.value)
         }
     }
 
