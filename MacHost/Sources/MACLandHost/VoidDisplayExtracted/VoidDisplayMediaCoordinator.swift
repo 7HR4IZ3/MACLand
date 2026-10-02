@@ -44,6 +44,8 @@ final class VoidDisplayMediaCoordinator: ObservableObject {
     var onICECandidate: ((VoidDisplayWebRTCICECandidate) -> Void)?
 
     private var captureSession: VoidDisplayScreenCaptureSession?
+    private var pendingRemoteICE: [VoidDisplayWebRTCICECandidate] = []
+    private var remoteAnswerApplied = false
     private var senderSession: (any VoidDisplayWebRTCSession)?
 
     init(
@@ -95,10 +97,23 @@ final class VoidDisplayMediaCoordinator: ObservableObject {
 
         do {
             try await senderSession.applyRemoteAnswer(answer)
+            remoteAnswerApplied = true
+            let candidates = pendingRemoteICE
+            pendingRemoteICE.removeAll()
+            for candidate in candidates { try await senderSession.addRemoteICECandidate(candidate) }
             state = .streaming
         } catch {
             state = .failed(error.localizedDescription)
         }
+    }
+
+    func addRemoteICECandidate(_ candidate: VoidDisplayWebRTCICECandidate) async {
+        guard remoteAnswerApplied, let senderSession else {
+            pendingRemoteICE.append(candidate)
+            return
+        }
+        do { try await senderSession.addRemoteICECandidate(candidate) }
+        catch { state = .failed(error.localizedDescription) }
     }
 
     func markReconnecting() {
@@ -142,6 +157,8 @@ final class VoidDisplayMediaCoordinator: ObservableObject {
         captureSession = nil
         senderSession?.close()
         senderSession = nil
+        pendingRemoteICE.removeAll()
+        remoteAnswerApplied = false
     }
 }
 

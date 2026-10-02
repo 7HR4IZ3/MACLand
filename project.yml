@@ -13,7 +13,7 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    DEVELOPMENT_TEAM: UACGQ779PC
+    DEVELOPMENT_TEAM: V56RP7M6RG
 targets:
   MACLandMobile:
     type: application

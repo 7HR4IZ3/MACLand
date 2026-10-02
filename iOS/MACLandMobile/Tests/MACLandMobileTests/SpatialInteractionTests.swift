@@ -24,6 +24,18 @@ final class SpatialInteractionTests: XCTestCase {
         let leftEye = SpatialGeometry.hit(origin: SIMD3(-0.032,0,0), direction: SIMD3(0.032,0,-2), surfaces: [display])
         XCTAssertEqual(leftEye?.uv.x ?? -1, 0.5, accuracy: 0.0001)
     }
+    func testCurvedDisplayUsesArcCoordinatesAndTrueDepth() {
+        let radius: Float = 3.2
+        let curved = SpatialSurface(id: "curved", center: SIMD3(0,0,-2.5), size: SIMD2(2.4,1.2),
+            title: "App", symbol: "app", isDisplay: true, curvatureRadius: radius)
+        let angle: Float = 0.3
+        let point = SIMD3<Float>(radius * sin(angle), 0.3, -2.5 + radius * (1 - cos(angle)))
+        let hit = SpatialGeometry.hit(direction: point, surfaces: [curved])
+        XCTAssertEqual(hit?.uv.x ?? -1, 0.5 + radius * angle / 2.4, accuracy: 0.0001)
+        XCTAssertEqual(hit?.uv.y ?? -1, 0.25, accuracy: 0.0001)
+        XCTAssertEqual(hit?.point.z ?? 0, point.z, accuracy: 0.0001)
+        XCTAssertNil(SpatialGeometry.hit(direction: SIMD3(3,0,-1), surfaces: [curved]))
+    }
     func testDwellFiresOnceAndMovementRearms() {
         var dwell = SpatialDwell()
         XCTAssertFalse(dwell.update(target: "display", point: .zero, time: 0, duration: 1))

@@ -165,6 +165,7 @@ protocol VoidDisplayWebRTCSession: AnyObject {
     func send(pixelBuffer: CVPixelBuffer, timestampNs: Int64) throws
     func makeOffer() async throws -> VoidDisplayWebRTCSessionDescription
     func applyRemoteAnswer(_ answer: VoidDisplayWebRTCSessionDescription) async throws
+    func addRemoteICECandidate(_ candidate: VoidDisplayWebRTCICECandidate) async throws
     func close()
 }
 
@@ -344,6 +345,17 @@ final class WebRTCVoidDisplaySenderSession: NSObject, VoidDisplayWebRTCSession, 
             throw VoidDisplayWebRTCError.signalingOperationFailed(
                 error.localizedDescription
             )
+        }
+    }
+
+    func addRemoteICECandidate(_ candidate: VoidDisplayWebRTCICECandidate) async throws {
+        guard state != .closed else { throw VoidDisplayWebRTCError.sessionClosed }
+        let ice = RTCIceCandidate(sdp: candidate.candidate, sdpMLineIndex: candidate.sdpMLineIndex, sdpMid: candidate.sdpMid)
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            peerConnection.add(ice) { error in
+                if let error { continuation.resume(throwing: error) }
+                else { continuation.resume() }
+            }
         }
     }
 

@@ -3,6 +3,52 @@ import XCTest
 
 @MainActor
 final class WorkspaceStateTests: XCTestCase {
+    func testMissingInputPermissionShowsNoticeWithoutFailingControlConnection() throws {
+        let client = MACLandControlClient()
+        var notice: String?
+        client.onInputError = { notice = $0 }
+        let payload = ErrorPayload(code: .unauthorized, message: "Enable Accessibility on the Mac", retryable: true,
+                                   details: ["capability": "input"])
+        let envelope = try ControlEnvelope(kind: .error, sequence: 1, payload: payload)
+        client.handle(data: try ControlFrameCodec().encode(envelope))
+        XCTAssertEqual(notice, payload.message)
+        XCTAssertEqual(client.state, .idle)
+        XCTAssertNil(client.lastError)
+    }
+
+    func testCodePairingUsesResolvedSecureEndpointAndPreservesLeadingZeros() throws {
+        let hostID = UUID()
+        let pin = String(repeating: "a", count: 64)
+        let host = MACLandDiscoveredHost(id: "Mac", name: "Mac", endpointDescription: "wss://mac.local.:58943",
+            hostID: hostID, certificateSHA256: pin)
+        let payload = try host.pairingPayload(code: " 001234 ")
+        XCTAssertEqual(payload.pairingCode, "001234")
+        XCTAssertEqual(payload.endpoint, host.endpointDescription)
+        XCTAssertEqual(payload.hostIdentity.deviceID, hostID)
+        XCTAssertEqual(payload.certificatePinning.certificateSHA256, pin)
+        for code in ["", "12345", "1234567", "abcdef", "１２３４５６"] {
+            XCTAssertThrowsError(try host.pairingPayload(code: code))
+        }
+    }
+
+    func testCodePairingRejectsHostsWithoutCertificateMetadata() {
+        let oldHost = MACLandDiscoveredHost(id: "Mac", name: "Mac", endpointDescription: "wss://mac.local:58943")
+        XCTAssertThrowsError(try oldHost.pairingPayload(code: "123456"))
+    }
+
+    func testReturningHostCannotReplaceItsRememberedCertificate() {
+        let host = MACLandDiscoveredHost(id: UUID().uuidString, name: "Mac", endpointDescription: "wss://mac.local:58943",
+            hostID: UUID(), certificateSHA256: String(repeating: "b", count: 64))
+        let key = "macland.trusted-host-pin." + host.id
+        UserDefaults.standard.set(String(repeating: "a", count: 64), forKey: key)
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+        let client = MACLandControlClient()
+        XCTAssertThrowsError(try client.connect(to: host, code: "123456")) { error in
+            XCTAssertEqual(error as? MACLandControlClientError, .certificateChanged)
+        }
+        XCTAssertEqual(client.state, .idle)
+    }
+
     func testOpeningAWindowFocusesItAndOpeningItAgainDoesNotDuplicateIt() {
         let state = WorkspaceState(initialWindows: [])
 

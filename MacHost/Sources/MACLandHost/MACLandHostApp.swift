@@ -52,7 +52,7 @@ private final class MACLandStatusItemDelegate: NSObject, NSApplicationDelegate {
 private enum MACLandMenuBarIcon {
     static func makeIcon() -> NSImage {
         guard let symbol = NSImage(
-            systemSymbolName: "macbook.and.iphone",
+            systemSymbolName: "vision.pro",
             accessibilityDescription: "MACLand"
         ) else {
             return fallbackIcon()
@@ -116,7 +116,7 @@ private final class MACLandPanelController: NSObject {
         )
 
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 392, height: 600),
+            contentRect: NSRect(x: 0, y: 0, width: 332, height: 510),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -152,8 +152,8 @@ private final class MACLandPanelController: NSObject {
     func open(relativeTo button: NSStatusBarButton) {
         guard let window, let screen = button.window?.screen ?? NSScreen.main else { return }
 
-        let desiredWidth: CGFloat = 392
-        let desiredHeight: CGFloat = 600
+        let desiredWidth: CGFloat = 332
+        let desiredHeight: CGFloat = 510
         let screenFrame = screen.visibleFrame
         let buttonFrame = button.window?.convertToScreen(button.convert(button.bounds, to: nil)) ?? button.window?.frame ?? .zero
 
@@ -177,6 +177,7 @@ private final class MACLandPanelController: NSObject {
 
 private enum HostSection: String, CaseIterable, Identifiable {
     case host
+    case pairing
     case media
     case apps
     case access
@@ -186,29 +187,31 @@ private enum HostSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .host: "Host"
+        case .host: "Displays"
+        case .pairing: "Pair iPhone"
         case .media: "Media"
         case .apps: "Apps"
-        case .access: "Access"
+        case .access: "Controls"
         case .settings: "Settings"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .host: "dot.radiowaves.left.and.right"
-        case .media: "waveform"
+        case .host: "display"
+        case .pairing: "qrcode"
+        case .media: "speaker.wave.2"
         case .apps: "square.grid.2x2"
-        case .access: "lock.shield"
+        case .access: "waveform.path"
         case .settings: "gearshape"
         }
     }
 }
 
 private enum MLColor {
-    static let canvas = Color(red: 0.07, green: 0.071, blue: 0.074)
-    static let surface = Color(red: 0.1, green: 0.102, blue: 0.106)
-    static let raised = Color(red: 0.135, green: 0.138, blue: 0.144)
+    static let canvas = Color(red: 0.055, green: 0.12, blue: 0.20)
+    static let surface = Color(red: 0.10, green: 0.19, blue: 0.27)
+    static let raised = Color(red: 0.15, green: 0.25, blue: 0.34)
     static let line = Color.white.opacity(0.1)
     static let lineStrong = Color.white.opacity(0.2)
     static let text = Color.white.opacity(0.96)
@@ -217,7 +220,7 @@ private enum MLColor {
     static let green = Color(red: 0.42, green: 0.73, blue: 0.5)
     static let amber = Color(red: 0.86, green: 0.64, blue: 0.3)
     static let red = Color(red: 0.84, green: 0.36, blue: 0.33)
-    static let blue = Color(red: 0.48, green: 0.64, blue: 0.86)
+    static let blue = Color(red: 0.04, green: 0.55, blue: 0.95)
 }
 
 private struct HostMenuView: View {
@@ -226,6 +229,7 @@ private struct HostMenuView: View {
     let onStatusItemChanged: () -> Void
 
     @State private var selectedSection: HostSection = .host
+    @State private var showsDetail = false
     @State private var query = ""
     @State private var isCreatingDesktop = false
     @State private var isDestroyingDesktop = false
@@ -235,17 +239,37 @@ private struct HostMenuView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            navRail
-            Divider()
-                .overlay(MLColor.line)
-            ScrollView {
-                content
-                    .padding(12)
+            Divider().overlay(MLColor.line).padding(.horizontal, 16)
+            if showsDetail {
+                HStack(spacing: 12) {
+                    Button { showsDetail = false } label: {
+                        Image(systemName: "chevron.left").font(.system(size: 15)).frame(width: 28, height: 34)
+                    }.buttonStyle(.plain).accessibilityLabel("Back to MACLand menu")
+                    Image(systemName: selectedSection.systemImage).font(.system(size: 23, weight: .light))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(selectedSection.title).font(.system(size: 16, weight: .semibold))
+                        Text(sectionDetail).font(.system(size: 11)).foregroundStyle(MLColor.textSecondary)
+                    }
+                    Spacer(minLength: 0)
+                }.foregroundStyle(MLColor.text).padding(.horizontal, 14).padding(.vertical, 12)
+                ScrollView { content.padding(.horizontal, 16).padding(.bottom, 16) }
+                footer
+            } else {
+                navRail
+                Divider().overlay(MLColor.line).padding(.horizontal, 16)
+                menuRow("iPhone", detail: runtime.pairingStatus, icon: "iphone", section: .pairing)
+                menuRow("Permissions", detail: runtime.permissionSummary, icon: "shield.lefthalf.filled", section: .access)
+                Button { selectedSection = .pairing; showsDetail = true } label: {
+                    menuLabel("Show Pairing Code", detail: "Scan to connect a new iPhone", icon: "qrcode", chevron: false)
+                }.buttonStyle(.plain)
+                Spacer(minLength: 0)
             }
-            footer
         }
-        .frame(width: 392, height: 600)
-        .background(MLColor.canvas)
+        .frame(width: 332, height: 510)
+        .background(.ultraThinMaterial)
+        .background(LinearGradient(colors: [MLColor.surface, MLColor.canvas], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.25), lineWidth: 0.75))
         .preferredColorScheme(.dark)
         .onAppear {
             if runtime.applications.isEmpty {
@@ -263,69 +287,49 @@ private struct HostMenuView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "macbook.and.iphone")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(MLColor.blue)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text("MACLand")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(MLColor.text)
-                Text(runtime.hostName)
-                    .font(.system(size: 10))
-                    .foregroundStyle(MLColor.textMuted)
-                    .lineLimit(1)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("MACLand").font(.system(size: 20, weight: .semibold))
+                Spacer()
+                Button(action: onClose) { Image(systemName: "xmark").font(.system(size: 11)) }
+                    .buttonStyle(.plain).foregroundStyle(MLColor.textSecondary).accessibilityLabel("Close MACLand panel")
             }
-
-            Spacer()
-
-            StatusPill(
-                title: runtime.isRunning ? "Live" : "Off",
-                color: runtime.isRunning ? MLColor.green : MLColor.textMuted
-            )
-
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .semibold))
-                    .frame(width: 24, height: 24)
+            HStack(spacing: 7) {
+                Circle().fill(runtime.isRunning ? MLColor.green : MLColor.textMuted).frame(width: 10, height: 10)
+                Text(runtime.hostName + (runtime.isRunning ? " · Host running" : " · Host stopped"))
+                    .font(.system(size: 13)).foregroundStyle(MLColor.textSecondary).lineLimit(1)
             }
-            .buttonStyle(IconButtonStyle())
-            .help("Close")
-            .accessibilityLabel("Close MACLand panel")
-        }
-        .padding(.horizontal, 12)
-        .frame(height: 44)
-        .background(MLColor.surface)
+        }.padding(.horizontal, 16).padding(.top, 18).padding(.bottom, 10)
     }
 
     private var navRail: some View {
-        HStack(spacing: 6) {
-            ForEach(HostSection.allCases) { section in
-                Button {
-                    selectedSection = section
-                } label: {
-                    Label(section.title, systemImage: section.systemImage)
-                        .font(.system(size: 11, weight: selectedSection == section ? .semibold : .regular))
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, minHeight: 28)
-                        .foregroundStyle(selectedSection == section ? MLColor.text : MLColor.textSecondary)
-                        .background(selectedSection == section ? MLColor.raised : .clear)
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(selectedSection == section ? MLColor.lineStrong : MLColor.line, lineWidth: 1)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .buttonStyle(.plain)
-                .help(section.title)
-                .accessibilityLabel(section.title)
-                .accessibilityAddTraits(selectedSection == section ? .isSelected : [])
-            }
+        VStack(spacing: 0) {
+            menuRow("Displays", detail: runtime.providerActionStatus.isEmpty ? "Remote display · Spatial Mode" : runtime.providerActionStatus, icon: "display", section: .host)
+            menuRow("Media", detail: runtime.mediaStatus, icon: "speaker.wave.2", section: .media)
+            menuRow("Apps", detail: "Launch and manage", icon: "square.grid.2x2", section: .apps)
+            menuRow("Controls", detail: "Gaze, input and interaction", icon: "waveform.path", section: .access)
+            menuRow("Settings", detail: "General, performance, updates", icon: "gearshape", section: .settings)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .background(MLColor.surface)
+    }
+
+    private func menuRow(_ title: String, detail: String, icon: String, section: HostSection) -> some View {
+        Button { selectedSection = section; showsDetail = true } label: {
+            menuLabel(title, detail: detail, icon: icon)
+        }.buttonStyle(.plain)
+    }
+
+    private func menuLabel(_ title: String, detail: String, icon: String, chevron: Bool = true) -> some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon).font(.system(size: 24, weight: .light)).frame(width: 28)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(size: 14, weight: .medium))
+                Text(detail).font(.system(size: 11)).foregroundStyle(MLColor.textSecondary).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            if chevron { Image(systemName: "chevron.right").font(.system(size: 11)).foregroundStyle(MLColor.textSecondary) }
+        }.foregroundStyle(MLColor.text).padding(.horizontal, 18).frame(height: 51)
+            .contentShape(Rectangle())
+            .overlay(alignment: .bottom) { Rectangle().fill(MLColor.line).frame(height: 0.5).padding(.leading, 62).padding(.trailing, 16) }
     }
 
     @ViewBuilder
@@ -333,6 +337,8 @@ private struct HostMenuView: View {
         switch selectedSection {
         case .host:
             hostPanel
+        case .pairing:
+            pairingPanel
         case .media:
             mediaPanel
         case .apps:
@@ -350,8 +356,9 @@ private struct HostMenuView: View {
 
             block {
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 10) {
-                        VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 13) {
+                        Image(systemName: "display").font(.system(size: 25, weight: .light)).foregroundStyle(MLColor.text)
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(hostStateTitle)
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(MLColor.text)
@@ -380,10 +387,11 @@ private struct HostMenuView: View {
                                     .font(.system(size: 11, weight: .semibold))
                             }
                             Text(hostActionTitle)
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold))
                             Spacer()
                         }
-                        .frame(maxWidth: .infinity, minHeight: 34)
+                        .padding(.horizontal, 12)
+                        .frame(maxWidth: .infinity, minHeight: 44)
                     }
                     .buttonStyle(LifecycleButtonStyle(running: runtime.isRunning))
                     .disabled(runtime.isBusy)
@@ -396,7 +404,7 @@ private struct HostMenuView: View {
 
                 block {
                     VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 8) {
+                        VStack(spacing: 8) {
                             ActionButton(
                                 title: isCreatingDesktop ? "Creating…" : "Create desktop",
                                 systemImage: "plus.rectangle",
@@ -434,8 +442,9 @@ private struct HostMenuView: View {
                                 .foregroundStyle(MLColor.textSecondary)
                         }
                     } else {
-                        HStack(spacing: 10) {
-                            VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 13) {
+                            Image(systemName: "qrcode").font(.system(size: 28, weight: .light)).foregroundStyle(MLColor.text)
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text("Pairing code")
                                     .font(.system(size: 10))
                                     .foregroundStyle(MLColor.textMuted)
@@ -457,7 +466,7 @@ private struct HostMenuView: View {
                             .accessibilityLabel("Copy pairing code")
                         }
 
-                        HStack(spacing: 8) {
+                        VStack(spacing: 8) {
                             ActionButton(title: "Show data", systemImage: "doc.text.magnifyingglass", action: { pendingPairingCode = runtime.pairingCode })
                             ActionButton(title: "Copy data", systemImage: "doc.on.doc.fill", action: runtime.copyPairingPayload)
                         }
@@ -467,6 +476,26 @@ private struct HostMenuView: View {
 
             if !pendingPairingCode.isEmpty {
                 PairingDataView(runtime: runtime, onDismiss: { pendingPairingCode = "" })
+            }
+        }
+    }
+
+    private var pairingPanel: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            block {
+                VStack(spacing: 14) {
+                    Image(systemName: "iphone.and.arrow.forward").font(.system(size: 34, weight: .light))
+                    Text(runtime.pairingCode.isEmpty ? "Start the host to pair" : runtime.pairingCode)
+                        .font(.system(size: runtime.pairingCode.isEmpty ? 17 : 36, weight: .semibold, design: .monospaced))
+                        .textSelection(.enabled)
+                    Text("On your iPhone, select this Mac and enter this code. Both devices must be on the same Wi-Fi.")
+                        .font(.system(size: 12)).foregroundStyle(MLColor.textSecondary).multilineTextAlignment(.center)
+                    if !runtime.isRunning {
+                        ActionButton(title: "Start host", systemImage: "play.fill", action: runtime.start)
+                    } else {
+                        ActionButton(title: "Copy code", systemImage: "doc.on.doc", action: runtime.copyPairingCode)
+                    }
+                }.frame(maxWidth: .infinity).padding(.vertical, 8)
             }
         }
     }
@@ -484,7 +513,7 @@ private struct HostMenuView: View {
                     Divider()
                         .overlay(MLColor.line)
 
-                    HStack(spacing: 8) {
+                    VStack(spacing: 8) {
                         ActionButton(title: isStartingMedia ? "Starting…" : "Start stream", systemImage: "play.fill", action: startMedia)
                             .disabled(isStartingMedia)
                         ActionButton(title: "Stop stream", systemImage: "stop.fill", action: stopMedia)
@@ -492,7 +521,7 @@ private struct HostMenuView: View {
                 }
             }
 
-            note("System audio capture is wired for the media milestone. WebRTC audio publishing still needs device validation.")
+            note("Video is available. Audio streaming is not available yet.")
         }
     }
 
@@ -505,18 +534,15 @@ private struct HostMenuView: View {
         return VStack(alignment: .leading, spacing: 12) {
             sectionLabel("Remote apps", detail: "Launch into the remote display")
 
-            TextField("Search installed apps", text: $query)
-                .textFieldStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundStyle(MLColor.text)
-                .padding(.horizontal, 10)
-                .frame(height: 30)
-                .background(MLColor.raised)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(MLColor.line, lineWidth: 1)
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass").foregroundStyle(MLColor.textSecondary)
+                TextField("Search installed apps", text: $query).textFieldStyle(.plain)
+                    .font(.system(size: 13)).foregroundStyle(MLColor.text)
+                if !query.isEmpty {
+                    Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
+                        .buttonStyle(.plain).accessibilityLabel("Clear app search")
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            }.padding(12).modifier(MenuGlassCard())
 
             block {
                 VStack(spacing: 0) {
@@ -596,7 +622,8 @@ private struct HostMenuView: View {
                         .foregroundStyle(MLColor.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    ActionButton(title: "Open System Settings", systemImage: "arrow.up.right.square", action: runtime.openPermissionSettings)
+                    ActionButton(title: "Screen Recording Settings", systemImage: "record.circle", action: runtime.openPermissionSettings)
+                    ActionButton(title: "Accessibility Settings", systemImage: "hand.point.up.left", action: runtime.permissionCenter.openAccessibilitySettings)
                 }
             }
         }
@@ -621,14 +648,7 @@ private struct HostMenuView: View {
                     get: { runtime.launchAtLoginController.isEnabled },
                     set: runtime.setLaunchAtLogin
                 )) {
-                    HStack {
-                        Image(systemName: "power")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(MLColor.textSecondary)
-                        Text("Launch at login")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(MLColor.text)
-                    }
+                    ToggleLabel(title: "Launch at login", detail: "Keep MACLand ready when you sign in.")
                 }
                 .toggleStyle(.switch)
                 .tint(MLColor.green)
@@ -668,7 +688,7 @@ private struct HostMenuView: View {
             .accessibilityHint("Quits the MACLand host")
         }
         .padding(12)
-        .background(MLColor.surface)
+        .background(MLColor.surface.opacity(0.3))
     }
 
     private var hostStateTitle: String {
@@ -770,42 +790,43 @@ private struct HostMenuView: View {
         runtime.stopMediaCapture()
     }
 
-    private func sectionLabel(_ title: String, detail: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(MLColor.text)
-            Spacer()
-            Text(detail)
-                .font(.system(size: 10))
-                .foregroundStyle(MLColor.textMuted)
-                .lineLimit(1)
+    private var sectionDetail: String {
+        switch selectedSection {
+        case .host: "Displays and device pairing"
+        case .pairing: "Connect using a six-digit code"
+        case .media: "Video, volume and audio"
+        case .apps: "Launch and manage your Mac apps"
+        case .access: "Input, pairing and permissions"
+        case .settings: "General and maintenance"
         }
+    }
+
+    private func sectionLabel(_ title: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(MLColor.text)
+            Text(detail).font(.system(size: 11)).foregroundStyle(MLColor.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }.padding(.horizontal, 3).padding(.top, 4)
     }
 
     private func block<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(11)
-            .background(MLColor.surface)
-            .overlay {
-                RoundedRectangle(cornerRadius: 7)
-                    .stroke(MLColor.line, lineWidth: 1)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 7))
+            .padding(14)
+            .modifier(MenuGlassCard())
     }
 
     private func statusRow(_ title: String, value: String, color: Color) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(title)
-                .font(.system(size: 11))
-                .foregroundStyle(MLColor.textSecondary)
-            Spacer(minLength: 8)
-            Text(value)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(color)
-                .multilineTextAlignment(.trailing)
-                .lineLimit(2)
-        }
+        HStack(spacing: 13) {
+            Image(systemName: menuSymbol(title)).font(.system(size: 21, weight: .light))
+                .foregroundStyle(MLColor.text).frame(width: 26)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(MLColor.text)
+                Text(value).font(.system(size: 11)).foregroundStyle(MLColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 5)
+            Circle().fill(color).frame(width: 7, height: 7)
+        }.padding(.vertical, 4)
     }
 
     private func note(_ text: String) -> some View {
@@ -855,13 +876,8 @@ private struct PairingDataView: View {
 
     private func block<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(11)
-            .background(MLColor.surface)
-            .overlay {
-                RoundedRectangle(cornerRadius: 7)
-                    .stroke(MLColor.line, lineWidth: 1)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 7))
+            .padding(14)
+            .modifier(MenuGlassCard())
     }
 }
 
@@ -870,27 +886,20 @@ private struct AppRow: View {
     @ObservedObject var runtime: HostRuntime
 
     var body: some View {
-        HStack(spacing: 9) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: application.url.path))
-                .resizable()
-                .frame(width: 24, height: 24)
-
-            Text(application.name)
-                .font(.system(size: 11, weight: .medium))
-                .lineLimit(1)
-
-            Spacer(minLength: 6)
-
-            Button("Launch") {
-                runtime.launchApplication(bundleIdentifier: application.bundleIdentifier)
-            }
-            .buttonStyle(.plain)
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(MLColor.textSecondary)
+        Button { runtime.launchApplication(bundleIdentifier: application.bundleIdentifier) } label: {
+            HStack(spacing: 13) {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: application.url.path))
+                    .resizable().frame(width: 34, height: 34)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(application.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                    Text("Open in your workspace").font(.system(size: 11)).foregroundStyle(MLColor.textSecondary)
+                }
+                Spacer(minLength: 5)
+                Image(systemName: "chevron.right").font(.system(size: 11)).foregroundStyle(MLColor.textSecondary)
+            }.foregroundStyle(MLColor.text).frame(minHeight: 58).contentShape(Rectangle())
+        }.buttonStyle(.plain)
             .disabled(application.bundleIdentifier == "com.apple.Terminal" && !runtime.terminalControlEnabledForMenu)
             .accessibilityLabel("Launch \(application.name)")
-        }
-        .frame(minHeight: 36)
     }
 }
 
@@ -911,10 +920,10 @@ private struct StatusPill: View {
         .frame(height: 22)
         .background(MLColor.raised)
         .overlay {
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(MLColor.line, lineWidth: 1)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityLabel(title)
     }
 }
@@ -924,15 +933,14 @@ private struct ToggleLabel: View {
     let detail: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(MLColor.text)
-            Text(detail)
-                .font(.system(size: 10))
-                .foregroundStyle(MLColor.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: menuSymbol(title)).font(.system(size: 22, weight: .light)).frame(width: 26)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(MLColor.text)
+                Text(detail).font(.system(size: 11)).foregroundStyle(MLColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }.foregroundStyle(MLColor.text).padding(.vertical, 5)
     }
 }
 
@@ -942,14 +950,33 @@ private struct ActionButton: View {
     let action: () -> Void
     var destructive = false
 
+    private var detail: String {
+        switch systemImage {
+        case "arrow.clockwise": "Check current status"
+        case "display": "Check your remote display"
+        case "play.fill": "Share your Mac workspace"
+        case "stop.fill": "End the current stream"
+        case "plus.rectangle": "Add a remote workspace"
+        case "trash": "Remove the remote display"
+        case "doc.text.magnifyingglass": "View connection details"
+        case "doc.on.doc.fill", "doc.on.doc": "Copy to clipboard"
+        case "arrow.up.right.square": "Manage host permissions"
+        default: ""
+        }
+    }
+
     var body: some View {
         Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.system(size: 11, weight: .medium))
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, minHeight: 28)
-        }
-        .buttonStyle(SecondaryButtonStyle(destructive: destructive))
+            HStack(spacing: 12) {
+                Image(systemName: systemImage).font(.system(size: 21, weight: .light)).frame(width: 26)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.system(size: 13, weight: .medium))
+                    if !detail.isEmpty { Text(detail).font(.system(size: 10)).foregroundStyle(MLColor.textSecondary) }
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(MLColor.textSecondary)
+            }.padding(.horizontal, 12).padding(.vertical, 11).frame(maxWidth: .infinity, alignment: .leading)
+        }.buttonStyle(SecondaryButtonStyle(destructive: destructive))
     }
 }
 
@@ -959,12 +986,12 @@ private struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(destructive ? MLColor.red : MLColor.text)
-            .background(configuration.isPressed ? MLColor.raised : MLColor.raised.opacity(0.62))
+            .background(configuration.isPressed ? MLColor.raised.opacity(0.7) : MLColor.raised.opacity(0.3))
             .overlay {
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(configuration.isPressed ? MLColor.lineStrong : MLColor.line, lineWidth: 1)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -973,7 +1000,7 @@ private struct IconButtonStyle: ButtonStyle {
         configuration.label
             .foregroundStyle(MLColor.textSecondary)
             .background(configuration.isPressed ? MLColor.raised : .clear)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -985,13 +1012,42 @@ private struct LifecycleButtonStyle: ButtonStyle {
             .foregroundStyle(MLColor.text)
             .background(
                 configuration.isPressed
-                    ? (running ? MLColor.raised : MLColor.green.opacity(0.82))
-                    : (running ? MLColor.raised : MLColor.green)
+                    ? (running ? MLColor.raised : MLColor.blue.opacity(0.82))
+                    : (running ? MLColor.raised : MLColor.blue)
             )
             .overlay {
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(configuration.isPressed ? MLColor.lineStrong : MLColor.line, lineWidth: 1)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct MenuGlassCard: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15))
+            .overlay {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(LinearGradient(colors: [.white.opacity(0.035), .cyan.opacity(0.035)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .allowsHitTesting(false)
+            }
+            .overlay(RoundedRectangle(cornerRadius: 15).stroke(.white.opacity(0.16), lineWidth: 0.75))
+    }
+}
+
+private func menuSymbol(_ title: String) -> String {
+    switch title {
+    case "Video": "display"
+    case "Audio": "speaker.wave.2"
+    case "Microphone": "mic"
+    case "Provider": "rectangle.on.rectangle"
+    case "Pairing", "Pairing data", "Allow new pairings": "qrcode"
+    case "Screen recording": "record.circle"
+    case "Accessibility", "Control": "hand.point.up.left"
+    case "Media": "play.rectangle"
+    case "Enable Terminal control": "terminal"
+    case "Launch at login": "power"
+    default: "info.circle"
     }
 }

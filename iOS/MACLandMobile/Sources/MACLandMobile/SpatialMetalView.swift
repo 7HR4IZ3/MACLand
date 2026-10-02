@@ -147,7 +147,7 @@ struct SpatialMetalView: UIViewRepresentable {
             encoder.setFragmentTexture(atlas, index: 1)
             let count = session.surfaces.count
             let gpu = session.surfaces.enumerated().map { index, surface in
-                SurfaceGPU(center: SIMD4(surface.center, 0), size: SIMD4(surface.size.x, surface.size.y, surface.isDisplay ? 1 : 0, 0),
+                SurfaceGPU(center: SIMD4(surface.center, 0), size: SIMD4(surface.size.x, surface.size.y, surface.isDisplay ? 1 : 0, surface.curvatureRadius),
                            atlas: SIMD4(0, Float(index) / Float(count), 1, 1 / Float(count)))
             }
             gpu.withUnsafeBufferPointer { buffer in
@@ -201,22 +201,66 @@ struct SpatialMetalView: UIViewRepresentable {
             return simd_float4x4(columns: (SIMD4(x,0,0,0), SIMD4(0,y,0,0),
                 SIMD4(0,0,-(far+near)/(far-near),-1), SIMD4(0,0,-2*far*near/(far-near),0)))
         }
+        private static func appSymbol(_ id: String) -> String {
+            let name = id.lowercased()
+            if name.contains("safari") || name.contains("chrome") { return "safari.fill" }
+            if name.contains("mail") { return "envelope.fill" }
+            if name.contains("notes") { return "note.text" }
+            if name.contains("photo") { return "photo.on.rectangle" }
+            if name.contains("calendar") { return "calendar" }
+            if name.contains("music") { return "music.note" }
+            if name.contains("message") { return "message.fill" }
+            if name.contains("finder") { return "folder.fill" }
+            if name.contains("terminal") { return "terminal.fill" }
+            if name.contains("code") { return "chevron.left.forwardslash.chevron.right" }
+            if name.contains("settings") || name.contains("preferences") { return "gearshape" }
+            return "app.fill"
+        }
         private func makeAtlas(device: MTLDevice, surfaces: [SpatialSurface]) -> MTLTexture? {
-            let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = true
-            let renderer = UIGraphicsImageRenderer(size: CGSize(width: 512, height: CGFloat(192 * surfaces.count)), format: format)
+            let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = false
+            let renderer = UIGraphicsImageRenderer(size: CGSize(width: 512, height: CGFloat(512 * surfaces.count)), format: format)
             let image = renderer.image { context in
                 for (index, surface) in surfaces.enumerated() {
-                    let y = CGFloat(index * 192)
-                    UIColor(red: 0.075, green: 0.095, blue: 0.14, alpha: 1).setFill()
-                    context.fill(CGRect(x: 0, y: y, width: 512, height: 192))
-                    let icon = UIImage(systemName: surface.symbol,
+                    let height = CGFloat(512 * surface.size.y / max(0.001, surface.size.x))
+                    context.cgContext.saveGState()
+                    context.cgContext.translateBy(x: 0, y: CGFloat(index * 512))
+                    context.cgContext.scaleBy(x: 1, y: 512 / height)
+                    let rect = CGRect(x: 0, y: 0, width: 512, height: height)
+                    let backing = surface.id.hasSuffix("background") || surface.id == "status" || surface.isDisplay
+                    if backing {
+                        let shape = UIBezierPath(roundedRect: rect.insetBy(dx: 2, dy: 2), cornerRadius: surface.id == "dock-background" ? height / 2 : 22)
+                        context.cgContext.saveGState()
+                        shape.addClip()
+                        let colors = [UIColor(red: 0.20, green: 0.29, blue: 0.42, alpha: 0.92).cgColor,
+                                      UIColor(red: 0.08, green: 0.15, blue: 0.25, alpha: 0.92).cgColor]
+                        if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors as CFArray, locations: [0, 1]) {
+                            context.cgContext.drawLinearGradient(gradient, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 512, y: height), options: [])
+                        }
+                        context.cgContext.restoreGState()
+                        UIColor.white.withAlphaComponent(0.28).setStroke(); shape.lineWidth = 2; shape.stroke()
+                    }
+                    let app = surface.id.hasPrefix("app:")
+                    let control = !backing && !app
+                    if app || control {
+                        let diameter = min(height * 0.57, app ? 240 : 160)
+                        let iconRect = CGRect(x: (512 - diameter) / 2, y: height * 0.12, width: diameter, height: diameter)
+                        let shape = UIBezierPath(roundedRect: iconRect, cornerRadius: app ? diameter * 0.22 : diameter / 2)
+                        let palette: [UIColor] = [.systemBlue, .systemCyan, .systemOrange, .systemGreen, .systemPink, .systemIndigo]
+                        let stableIndex = surface.id.utf8.reduce(0) { ($0 + Int($1)) % palette.count }
+                        (app ? palette[stableIndex] : surface.id == "exit" ? UIColor.systemRed.withAlphaComponent(0.48) : surface.id == "apps" ? UIColor.systemBlue : UIColor.white.withAlphaComponent(0.16)).setFill()
+                        shape.fill()
+                    }
+                    let symbol = app ? Self.appSymbol(surface.id) : surface.symbol
+                    let icon = UIImage(systemName: symbol,
                                        withConfiguration: UIImage.SymbolConfiguration(pointSize: 42, weight: .regular))?
                         .withTintColor(.white, renderingMode: .alwaysOriginal)
-                    icon?.draw(in: CGRect(x: 232, y: y + 32, width: 48, height: 48))
-                    let style = NSMutableParagraphStyle(); style.alignment = .center; style.lineBreakMode = .byTruncatingTail
-                    (surface.title as NSString).draw(in: CGRect(x: 12, y: y + (surface.symbol.isEmpty ? 72 : 110), width: 488, height: 48),
-                        withAttributes: [.font: UIFont.systemFont(ofSize: 29, weight: .medium), .foregroundColor: UIColor.white,
+                    let symbolSize = min(height * 0.27, backing ? 48 : 85)
+                    icon?.draw(in: CGRect(x: (512 - symbolSize) / 2, y: height * 0.12 + (min(height * 0.57, app ? 240 : 160) - symbolSize) / 2, width: symbolSize, height: symbolSize))
+                    let style = NSMutableParagraphStyle(); style.alignment = surface.id == "picker-background" ? .left : .center; style.lineBreakMode = .byTruncatingTail
+                    (surface.title as NSString).draw(in: CGRect(x: 24, y: surface.id == "picker-background" ? 20 : surface.symbol.isEmpty ? max(0, (height - 34) / 2) : height * 0.77, width: 464, height: 60),
+                        withAttributes: [.font: UIFont.systemFont(ofSize: app ? 34 : backing ? 24 : 30, weight: .medium), .foregroundColor: UIColor.white,
                                          .paragraphStyle: style])
+                    context.cgContext.restoreGState()
                 }
             }
             guard let cgImage = image.cgImage else { return nil }

@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Combine
 import Foundation
 import OSLog
@@ -102,7 +103,17 @@ final class HostRuntime: ObservableObject {
                 },
                 onMediaAnswer: { [weak self] answer in
                     Task { @MainActor in
-                        self?.applyMediaAnswer(sdp: answer.sdp)
+                        guard let self, answer.sessionID == self.mediaSessionID else { return }
+                        self.applyMediaAnswer(sdp: answer.sdp)
+                    }
+                },
+                onMediaICE: { [weak self] payload in
+                    Task { @MainActor in
+                        guard let self, payload.sessionID == self.mediaSessionID,
+                              let index = payload.sdpMLineIndex else { return }
+                        await self.mediaCoordinator?.addRemoteICECandidate(
+                            VoidDisplayWebRTCICECandidate(candidate: payload.candidate,
+                                                          sdpMid: payload.sdpMid, sdpMLineIndex: index))
                     }
                 },
                 onAppLaunch: { [weak self] command in
@@ -475,6 +486,14 @@ final class HostRuntime: ObservableObject {
     }
 
     private func inject(batch: InputBatchPayload) {
+        guard AXIsProcessTrusted() else {
+            let message = "Enable MACLand Host in Mac System Settings → Privacy & Security → Accessibility to use touch controls."
+            workspaceActionStatus = message
+            controlListener?.sendToPairedClients(kind: .error,
+                payload: ErrorPayload(code: .unauthorized, message: message, retryable: true,
+                                      details: ["capability": "input"]))
+            return
+        }
         let origin = displayProvider.activeDisplayBounds?.origin ?? .zero
         do {
             for event in batch.events {

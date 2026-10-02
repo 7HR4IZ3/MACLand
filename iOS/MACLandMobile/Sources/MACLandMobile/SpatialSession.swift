@@ -20,7 +20,7 @@ final class SpatialSession: ObservableObject {
     private var motionIsFresh = false
     private var mode = 0 // click, right-click, double-click
     private var appPage = 0
-    private var launcher = false
+    private var launcher = true
     private var blockedControl: String?
     private(set) var armed = false
     private(set) var head = matrix_identity_float4x4
@@ -84,7 +84,7 @@ final class SpatialSession: ObservableObject {
         activeID = hit?.id
         if hit?.id != blockedControl { blockedControl = nil }
         guard let hit else { dwell.reset(); return }
-        if hit.id == blockedControl || hit.id == "status" { dwell.reset(); return }
+        if hit.id == blockedControl || hit.id == "status" || hit.id.hasSuffix("background") { dwell.reset(); return }
         if hit.id == "display" && (!armed || !usable) { dwell.reset(); return }
         let stablePoint = hit.id == "display" ? SIMD2<Float>(hit.point.x, hit.point.y) : .zero
         let activated = dwell.update(target: hit.id, point: stablePoint, time: time, duration: dwellDuration)
@@ -104,30 +104,33 @@ final class SpatialSession: ObservableObject {
         let connectionStatus = workspace.connectionState.isConnected ? status : workspace.connectionState.label
         surfaces = [SpatialSurface(id: "status", center: SIMD3(0, 1.36, -2.2),
             size: SIMD2(1.8, 0.23), title: error ?? connectionStatus, symbol: "")]
-        if !launcher {
-            surfaces.append(SpatialSurface(id: "display", center: SIMD3(0, 0.15, -2.2),
-                size: SIMD2(height * aspect, height), title: workspace.mediaState.connectionState.label,
-                symbol: "display", isDisplay: true))
-        } else {
+        surfaces.append(SpatialSurface(id: "display", center: SIMD3(launcher ? -0.68 : 0, 0.15, -2.5),
+            size: SIMD2(height * aspect, height), title: workspace.mediaState.connectionState.label,
+            symbol: "display", isDisplay: true, curvatureRadius: 3.2))
+        if launcher {
+            surfaces.append(SpatialSurface(id: "picker-background", center: SIMD3(1.40, 0.23, -2.24),
+                size: SIMD2(1.12, 1.48), title: "Apps", symbol: ""))
             let apps = workspace.controlClient.applications
-            let start = min(appPage * 6, max(0, apps.count - 1))
-            for (index, app) in apps.dropFirst(start).prefix(6).enumerated() {
+            let start = min(appPage * 12, max(0, apps.count - 1))
+            for (index, app) in apps.dropFirst(start).prefix(12).enumerated() {
                 surfaces.append(SpatialSurface(id: "app:" + app.bundleIdentifier,
-                    center: SIMD3(Float(index % 3 - 1) * 0.68, 0.52 - Float(index / 3) * 0.48, -2.2),
-                    size: SIMD2(0.62, 0.40), title: app.name, symbol: app.isRunning ? "app.fill" : "app"))
+                    center: SIMD3(1.04 + Float(index % 3) * 0.36, 0.66 - Float(index / 3) * 0.30, -2.2),
+                    size: SIMD2(0.32, 0.27), title: app.name, symbol: app.isRunning ? "app.fill" : "app"))
             }
             if apps.isEmpty {
-                surfaces.append(SpatialSurface(id: "refresh", center: SIMD3(0, 0.2, -2.2),
-                    size: SIMD2(1.5,0.5), title: "Refresh Mac apps", symbol: "arrow.clockwise"))
+                surfaces.append(SpatialSurface(id: "refresh", center: SIMD3(1.40, 0.2, -2.2),
+                    size: SIMD2(0.95,0.35), title: "Refresh Mac apps", symbol: "arrow.clockwise"))
             }
         }
         let buttons: [(String,String,String)] = [
-            ("apps", launcher ? "Desktop" : "Apps", launcher ? "display" : "square.grid.2x2"),
-            ("arm", armed ? "Pause" : "Enable input", armed ? "pause.fill" : "cursorarrow"),
-            ("mode", ["Click", "Right click", "Double click"][mode], "cursorarrow.click"),
+            ("apps", "Apps", "square.grid.2x2"),
+            ("arm", armed ? "Pause" : "Enable input", armed ? "pause.fill" : "keyboard"),
+            ("mode", ["Click Mode", "Right click", "Double click"][mode], "circle.inset.filled"),
             ("recenter", "Recenter", "scope"),
             ("exit", "Exit", "xmark")
         ]
+        surfaces.append(SpatialSurface(id: "dock-background", center: SIMD3(0, -1.04, -2.25),
+            size: SIMD2(2.38, 0.43), title: "", symbol: ""))
         for (i, item) in buttons.enumerated() {
             surfaces.append(SpatialSurface(id: item.0, center: SIMD3(Float(i - 2)*0.45, -1.04, -2.2),
                                           size: SIMD2(0.41,0.27), title: item.1, symbol: item.2))
@@ -154,7 +157,7 @@ final class SpatialSession: ObservableObject {
             case "exit": stop(); exitRequested = true
             case "size": scale = scale < 1 ? 1 : scale < 1.3 ? 1.35 : 0.75
             case "previous": appPage = max(0, appPage - 1)
-            case "next": appPage = min(max(0, (workspace.controlClient.applications.count - 1) / 6), appPage + 1)
+            case "next": appPage = min(max(0, (workspace.controlClient.applications.count - 1) / 12), appPage + 1)
             case "refresh": try workspace.controlClient.requestApplications()
             case "pageup", "pagedown":
                 guard armed && usable else { return }

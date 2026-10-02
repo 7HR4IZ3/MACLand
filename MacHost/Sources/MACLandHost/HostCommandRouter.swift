@@ -45,13 +45,23 @@ struct InputInjector {
     }
 
     private func injectPointer(_ event: InputEvent) throws {
+        try makePointerEvent(event).post(tap: .cghidEventTap)
+    }
+
+    // Kept separate so event semantics can be tested without controlling the Mac.
+    func makePointerEvent(_ event: InputEvent) throws -> CGEvent {
         guard let location = event.location else { throw InputInjectorError.missingLocation }
         let button = event.button.map(Self.cgButton(for:)) ?? .left
         let type: CGEventType
 
         switch event.kind {
         case .pointerMove:
-            type = .mouseMoved
+            switch event.pressed == true ? event.button : nil {
+            case .left: type = .leftMouseDragged
+            case .right: type = .rightMouseDragged
+            case .middle: type = .otherMouseDragged
+            case nil: type = .mouseMoved
+            }
         case .pointerButton:
             switch event.button ?? .left {
             case .left: type = event.pressed == true ? .leftMouseDown : .leftMouseUp
@@ -64,6 +74,19 @@ struct InputInjector {
             throw InputInjectorError.unsupportedEvent
         }
 
+        if event.kind == .scroll {
+            guard let delta = event.scrollDelta, delta.x.isFinite, delta.y.isFinite else {
+                throw InputInjectorError.unsupportedEvent
+            }
+            guard let wheel = CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2,
+                                      wheel1: Int32(max(-4096, min(4096, delta.y))),
+                                      wheel2: Int32(max(-4096, min(4096, delta.x))), wheel3: 0) else {
+                throw InputInjectorError.eventCreationFailed
+            }
+            wheel.location = CGPoint(x: location.x, y: location.y)
+            return wheel
+        }
+
         guard let cgEvent = CGEvent(
             mouseEventSource: nil,
             mouseType: type,
@@ -74,7 +97,7 @@ struct InputInjector {
         if event.kind == .pointerButton {
             cgEvent.setIntegerValueField(.mouseEventClickState, value: Int64(min(2, max(1, event.clickCount ?? 1))))
         }
-        cgEvent.post(tap: .cghidEventTap)
+        return cgEvent
     }
 
     private func injectKey(_ event: InputEvent) throws {

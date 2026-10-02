@@ -8,6 +8,7 @@ struct SpatialSurface: Equatable {
     var title: String
     var symbol: String
     var isDisplay = false
+    var curvatureRadius: Float = 0
 }
 
 struct SpatialHit: Equatable {
@@ -24,10 +25,29 @@ enum SpatialGeometry {
               abs(direction.z) > 0.00001 else { return nil }
         return surfaces.compactMap { surface -> SpatialHit? in
             guard surface.size.x > 0, surface.size.y > 0 else { return nil }
-            let t = (surface.center.z - origin.z) / direction.z
+            var t = (surface.center.z - origin.z) / direction.z
+            var horizontal: Float
+            if surface.curvatureRadius > 0 {
+                let radius = surface.curvatureRadius
+                let x = origin.x - surface.center.x
+                let z = origin.z - (surface.center.z + radius)
+                let a = direction.x * direction.x + direction.z * direction.z
+                let b = 2 * (x * direction.x + z * direction.z)
+                let c = x * x + z * z - radius * radius
+                let discriminant = b * b - 4 * a * c
+                guard a > 0, discriminant >= 0 else { return nil }
+                // The workspace occupies the back half of the cylinder.
+                let roots = [(-b - sqrt(discriminant)) / (2 * a), (-b + sqrt(discriminant)) / (2 * a)]
+                guard let back = roots.filter({ $0 > 0 && origin.z + $0 * direction.z <= surface.center.z + radius }).min() else { return nil }
+                t = back
+                let point = origin + t * direction
+                horizontal = atan2(point.x - surface.center.x, surface.center.z + radius - point.z) * radius
+            } else {
+                horizontal = origin.x + t * direction.x - surface.center.x
+            }
             guard t > 0 else { return nil }
             let point = origin + t * direction
-            let uv = SIMD2<Float>(0.5 + (point.x - surface.center.x) / surface.size.x,
+            let uv = SIMD2<Float>(0.5 + horizontal / surface.size.x,
                                   0.5 - (point.y - surface.center.y) / surface.size.y)
             guard uv.x >= 0, uv.x <= 1, uv.y >= 0, uv.y <= 1 else { return nil }
             return SpatialHit(id: surface.id, point: point, uv: uv, distance: t)

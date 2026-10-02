@@ -1,8 +1,11 @@
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 private enum HomeColors {
-    static let canvas = Color(white: 0.04)
-    static let surface = Color(white: 0.09)
+    static let canvas = Color(red: 0.025, green: 0.055, blue: 0.095)
+    static let surface = Color(red: 0.12, green: 0.18, blue: 0.25)
     static let surfaceRaised = Color(white: 0.12)
     static let control = Color(white: 0.16)
     static let border = Color.white.opacity(0.12)
@@ -12,35 +15,106 @@ private enum HomeColors {
     static let success = Color(red: 0.45, green: 0.75, blue: 0.52)
     static let warning = Color(red: 0.86, green: 0.66, blue: 0.32)
     static let danger = Color(red: 0.86, green: 0.42, blue: 0.38)
-    static let accent = Color(red: 0.62, green: 0.72, blue: 0.68)
+    static let accent = Color.cyan
 }
 
 @MainActor
 struct MACLandHomeView: View {
     @ObservedObject var workspace: WorkspaceState
 
-    var body: some View {
-        VStack(spacing: 0) {
-            PhoneStatusBar(workspace: workspace)
+    @State private var showsConnection = false
+    @State private var showsSettings = false
 
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(red: 0.055, green: 0.10, blue: 0.17), HomeColors.canvas, Color(red: 0.02, green: 0.12, blue: 0.19)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                .ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    ConnectionHub(workspace: workspace)
-                    DesktopSection(workspace: workspace)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 24)
-            }
-            .scrollIndicators(.hidden)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(HomeColors.canvas)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                DesktopDock(workspace: workspace)
-            }
-        }
-        .background(Color.black)
+                VStack(spacing: 14) {
+                    HStack {
+                        (Text("MAC").foregroundColor(.white) + Text("Land").foregroundColor(.cyan))
+                            .font(.system(size: 27, weight: .bold))
+                        Spacer()
+                        Button { showsSettings = true } label: {
+                            Image(systemName: "gearshape").font(.system(size: 21))
+                        }.accessibilityLabel("Settings")
+                    }.padding(.vertical, 14)
+
+                    Button { showsConnection.toggle() } label: {
+                        HStack(spacing: 18) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(LinearGradient(colors: [.blue, .cyan, Color(red: 0.03, green: 0.2, blue: 0.5)], startPoint: .bottomLeading, endPoint: .topTrailing))
+                                    .frame(width: 76, height: 49)
+                                Image(systemName: "desktopcomputer").font(.system(size: 37, weight: .light))
+                            }
+                            VStack(alignment: .leading, spacing: 7) {
+                                Text(hostName).font(.system(size: 17, weight: .medium))
+                                HStack(spacing: 6) {
+                                    Circle().fill(workspace.connectionState.statusColor).frame(width: 10, height: 10)
+                                    Text(workspace.connectionState.shortLabel).font(.system(size: 12))
+                                }.foregroundStyle(HomeColors.secondaryText)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(HomeColors.secondaryText)
+                        }.padding(20).frame(maxWidth: .infinity).modifier(HomeGlass())
+                    }.buttonStyle(.plain)
+
+                    VStack(spacing: 0) {
+                        readinessRow("iPhone Paired", detail: workspace.connectionState.isConnected ? "This iPhone is connected" : "Connect this iPhone to your Mac", icon: "wifi", ready: workspace.connectionState.isConnected)
+                        Divider().overlay(HomeColors.border).padding(.leading, 49)
+                        readinessRow("Spatial Display", detail: workspace.mediaState.connectionState.label, icon: "display", ready: workspace.connectionState.isConnected)
+                        Divider().overlay(HomeColors.border).padding(.leading, 49)
+                        readinessRow("Input", detail: "Gaze + Optional Keyboard", icon: "square.3.layers.3d", ready: workspace.connectionState.isConnected)
+                    }.padding(.horizontal, 20).padding(.vertical, 6).modifier(HomeGlass())
+
+                    Button { workspace.isSpatialPresented = true } label: {
+                        HStack(spacing: 15) {
+                            Image(systemName: "vision.pro").font(.system(size: 29, weight: .light))
+                            Text("Enter Spatial Workspace").font(.system(size: 16, weight: .semibold))
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right").font(.system(size: 13))
+                        }.padding(.horizontal, 22).frame(height: 76)
+                            .background(LinearGradient(colors: [Color(red: 0.02, green: 0.39, blue: 1), .cyan, Color(red: 0.04, green: 0.78, blue: 0.73)], startPoint: .leading, endPoint: .trailing), in: Capsule())
+                            .overlay(Capsule().stroke(.white.opacity(0.35), lineWidth: 1))
+                            .shadow(color: .cyan.opacity(0.27), radius: 20, y: 7)
+                    }.buttonStyle(.plain).padding(.top, 3)
+
+                    if showsConnection || !workspace.connectionState.isConnected {
+                        ConnectionHub(workspace: workspace)
+                    }
+                    if workspace.connectionState.isConnected {
+                        Button { workspace.isRemoteFullscreen = true } label: {
+                            Label("Open Remote Display", systemImage: "display").font(.subheadline)
+                        }.buttonStyle(.plain).padding(.top, 15).foregroundStyle(HomeColors.secondaryText)
+                    }
+                }.frame(maxWidth: 430).padding(.horizontal, 24).padding(.bottom, 30)
+                    .frame(maxWidth: .infinity)
+            }.scrollIndicators(.hidden)
+        }.foregroundStyle(.white).preferredColorScheme(.dark)
+            .sheet(isPresented: $showsSettings) { SettingsPlaceholderView(workspace: workspace).preferredColorScheme(.dark) }
+#if os(iOS) && !SWIFT_PACKAGE
+            .fullScreenCover(isPresented: $workspace.isSpatialPresented) { SpatialWorkspaceView(workspace: workspace) }
+#endif
     }
+
+    private var hostName: String {
+        if case let .connected(name) = workspace.connectionState { return name }
+        return "Your Mac"
+    }
+
+    private func readinessRow(_ title: String, detail: String, icon: String, ready: Bool) -> some View {
+        HStack(spacing: 18) {
+            Image(systemName: icon).font(.system(size: 21, weight: .regular)).frame(width: 27)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(size: 14, weight: .medium))
+                Text(detail).font(.system(size: 11)).foregroundStyle(HomeColors.secondaryText)
+            }
+            Spacer(minLength: 5)
+            Circle().fill(ready ? Color.green : HomeColors.mutedText).frame(width: 8, height: 8)
+        }.frame(minHeight: 57)
+    }
+
 }
 
 @MainActor
@@ -92,6 +166,8 @@ private struct ConnectionHub: View {
     @ObservedObject var workspace: WorkspaceState
     @State private var isManualPairingExpanded = false
     @State private var selectedHostDescription: String?
+    @State private var selectedHostID: String?
+    @State private var enteredCode = ""
 
     private var state: ConnectionState { workspace.connectionState }
     private var errorMessage: String? {
@@ -102,7 +178,7 @@ private struct ConnectionHub: View {
         VStack(alignment: .leading, spacing: 14) {
             SectionHeader(
                 title: "Connection",
-                detail: "Find your Mac, pair it once, then open the remote desktop."
+                detail: "Choose your Mac and enter the code shown in its menu bar."
             )
 
             statusBlock
@@ -115,8 +191,13 @@ private struct ConnectionHub: View {
                 discoveryList
             }
 
-            if state.showsPairingEntry {
-                manualPairing
+            if !state.isConnected {
+                codePairing
+                DisclosureGroup("Advanced pairing") { manualPairing.padding(.top, 10) }
+                    .font(.caption).foregroundStyle(HomeColors.secondaryText)
+            }
+            if let discoveryError = workspace.discovery.lastError {
+                Text(discoveryError).font(.caption).foregroundStyle(HomeColors.warning)
             }
 
             if let errorMessage {
@@ -132,6 +213,7 @@ private struct ConnectionHub: View {
                 .stroke(HomeColors.border, lineWidth: 1)
         }
         .clipShape(RoundedRectangle(cornerRadius: 10))
+        .onAppear { if !state.isConnected { workspace.beginPairing() } }
     }
 
     private var statusBlock: some View {
@@ -179,11 +261,9 @@ private struct ConnectionHub: View {
     private var statusDetail: String {
         switch state {
         case .disconnected:
-            return "Scan this network or paste pairing data copied from the Mac menu bar."
+            return "Start MACLand on your Mac, then scan for it here."
         case let .pairing(code):
-            return code.isEmpty
-                ? "Scanning the local network for MACLand hosts."
-                : "Enter \(code) on the Mac, or paste the full pairing data below."
+            return "Select your Mac below and enter its six-digit pairing code."
         case .connecting:
             return "The Mac must approve this device over the secure channel."
         case .connected:
@@ -226,9 +306,8 @@ private struct ConnectionHub: View {
 
                     Spacer(minLength: 6)
 
-                    Button("Use pairing data") {
-                        selectedHostDescription = host.endpointDescription
-                        isManualPairingExpanded = true
+                    Button(selectedHost?.id == host.id ? "Selected" : "Select") {
+                        selectedHostID = host.id
                     }
                     .buttonStyle(HomeButtonStyle(kind: .secondary))
                     .font(.caption.weight(.medium))
@@ -242,6 +321,33 @@ private struct ConnectionHub: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+        }
+    }
+
+    private var selectedHost: MACLandDiscoveredHost? {
+        workspace.discovery.hosts.first { $0.id == selectedHostID }
+            ?? (workspace.discovery.hosts.count == 1 ? workspace.discovery.hosts.first : nil)
+    }
+
+    private var codePairing: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let host = selectedHost {
+                Text("Pair with " + host.name).font(.subheadline.weight(.medium))
+            } else {
+                Text("Select a nearby Mac to connect").font(.subheadline)
+            }
+            TextField("Six-digit code from your Mac", text: $enteredCode)
+                .textFieldStyle(.plain).font(.system(size: 19, weight: .medium, design: .monospaced))
+                .padding(14).background(HomeColors.surfaceRaised, in: RoundedRectangle(cornerRadius: 12))
+#if os(iOS)
+                .keyboardType(.numberPad)
+#endif
+                .onChange(of: enteredCode) { _, value in
+                    enteredCode = String(value.utf8.filter { $0 >= 48 && $0 <= 57 }.prefix(6).map { Character(UnicodeScalar($0)) })
+                }
+            HomeActionButton(title: state == .connecting ? "Connecting…" : "Connect to Mac", systemImage: "link", style: .primary) {
+                if let host = selectedHost { workspace.connect(to: host, code: enteredCode) }
+            }.disabled(selectedHost == nil || enteredCode.count != 6 || state == .connecting)
         }
     }
 
@@ -329,17 +435,12 @@ private struct ConnectionHub: View {
                         workspace.reconnect()
                     }
                 }
-                HomeActionButton(title: "Pair manually", systemImage: "doc.text", style: .secondary) {
-                    isManualPairingExpanded = true
-                }
             case .pairing:
                 HomeActionButton(title: "Cancel", systemImage: "xmark", style: .secondary) {
                     workspace.disconnect()
                 }
-                if !isManualPairingExpanded {
-                    HomeActionButton(title: "Pair manually", systemImage: "doc.text", style: .secondary) {
-                        isManualPairingExpanded = true
-                    }
+                HomeActionButton(title: "Scan again", systemImage: "arrow.clockwise", style: .secondary) {
+                    workspace.beginPairing()
                 }
             case .connecting:
                 HomeActionButton(title: "Cancel", systemImage: "xmark", style: .secondary) {
@@ -481,6 +582,7 @@ private struct WindowFrame: View {
                         mediaClient: workspace.mediaState.webRTCClient,
                         remoteSize: workspace.mediaState.displaySize,
                         onTouch: workspace.sendTouch,
+                        onInput: workspace.sendDesktopInput,
                         onConnectionAction: {
                             if workspace.connectionState.isConnected {
                                 workspace.isRemoteFullscreen = true
@@ -708,6 +810,7 @@ struct TaskSwitcherOverlay: View {
 struct RemoteSessionFullscreenView: View {
     @ObservedObject var workspace: WorkspaceState
     @State private var lastTouch: RemoteTouchPoint?
+    @State private var trackpadMode = false
 
     var body: some View {
         ZStack {
@@ -716,26 +819,39 @@ struct RemoteSessionFullscreenView: View {
             GeometryReader { geometry in
                 ZStack {
                     if workspace.connectionState.isConnected {
-                        NativeWebRTCVideoSurface(videoTrack: workspace.mediaState.webRTCClient.remoteVideoTrack)
+                        LiveRemoteVideoSurface(client: workspace.mediaState.webRTCClient)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         sessionProgress
                     }
                 }
                 .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            sendTouch(at: value.location, in: geometry.size)
-                        }
-                )
+                #if os(iOS)
+                .overlay {
+                    DesktopTouchSurface(remoteSize: workspace.mediaState.displaySize,
+                                        trackpadMode: trackpadMode,
+                                        enabled: workspace.connectionState.isConnected,
+                                        send: workspace.sendDesktopInput)
+                }
+                #else
+                .gesture(DragGesture(minimumDistance: 0).onChanged { value in
+                    sendTouch(at: value.location, in: geometry.size)
+                })
+                #endif
             }
             .aspectRatio(remoteAspectRatio, contentMode: .fit)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
         }
         .overlay(alignment: .top) {
-            sessionBar
+            VStack(spacing: 6) {
+                sessionBar
+                if let error = workspace.inputError {
+                    Text(error).font(.caption).foregroundStyle(.white)
+                        .padding(12).background(Color.orange.opacity(0.85), in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal, 12)
+                }
+            }
         }
         .overlay(alignment: .bottom) {
             sessionFooter
@@ -808,12 +924,16 @@ struct RemoteSessionFullscreenView: View {
 
             Spacer()
 
+            Button(trackpadMode ? "Trackpad" : "Direct") { trackpadMode.toggle() }
+                .font(.caption.bold())
+                .foregroundStyle(.cyan)
+
             if let lastTouch {
                 Text("Touch \(Int(lastTouch.remote.x)) × \(Int(lastTouch.remote.y))")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(HomeColors.secondaryText)
             } else {
-                Text("Touch to move the pointer")
+                Text("Tap to click · Hold to drag")
                     .font(.caption2)
                     .foregroundStyle(HomeColors.mutedText)
             }
@@ -906,6 +1026,7 @@ private struct RemoteDisplaySurface: View {
     @ObservedObject var mediaClient: NativeWebRTCClient
     let remoteSize: CGSize
     let onTouch: (RemoteTouchPoint) -> Void
+    let onInput: ([InputEvent]) -> Void
     let onConnectionAction: () -> Void
     @State private var lastTouch: RemoteTouchPoint?
 
@@ -926,6 +1047,14 @@ private struct RemoteDisplaySurface: View {
                 }
             }
             .contentShape(Rectangle())
+            #if os(iOS)
+            .overlay {
+                if connectionState.isConnected {
+                    DesktopTouchSurface(remoteSize: remoteSize, trackpadMode: false,
+                                        enabled: true, send: onInput)
+                }
+            }
+            #else
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
@@ -935,6 +1064,7 @@ private struct RemoteDisplaySurface: View {
                         onTouch(touch)
                     }
             )
+            #endif
         }
         .aspectRatio(remoteSize.width / remoteSize.height, contentMode: .fit)
         .clipped()
@@ -943,7 +1073,7 @@ private struct RemoteDisplaySurface: View {
     @ViewBuilder
     private func connectedSurface(mapper: RemoteDisplayCoordinateMapper) -> some View {
         ZStack(alignment: .bottomLeading) {
-            NativeWebRTCVideoSurface(videoTrack: mediaClient.remoteVideoTrack)
+            LiveRemoteVideoSurface(client: mediaClient)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(connectionState.label) · video surface ready")
@@ -952,7 +1082,7 @@ private struct RemoteDisplaySurface: View {
                     Text("Touch \(Int(lastTouch.remote.x)) × \(Int(lastTouch.remote.y))")
                         .font(.caption2.monospacedDigit())
                 } else {
-                    Text("Touch the surface to send input")
+                    Text("Tap to click · Hold to drag · Two fingers to scroll")
                         .font(.caption2)
                 }
             }
@@ -1237,5 +1367,166 @@ private extension ConnectionState {
         case .connected:
             return ""
         }
+    }
+}
+
+private struct HomeGlass: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .background(Color(red: 0.10, green: 0.18, blue: 0.26).opacity(0.65), in: RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.18), lineWidth: 0.75))
+            .shadow(color: .black.opacity(0.2), radius: 14, y: 8)
+    }
+}
+
+#if os(iOS)
+/// A UIKit overlay keeps multi-touch gestures separate from the streamed video.
+private struct DesktopTouchSurface: UIViewRepresentable {
+    var remoteSize: CGSize
+    var trackpadMode: Bool
+    var enabled: Bool
+    var send: ([InputEvent]) -> Void
+
+    func makeUIView(context: Context) -> DesktopGestureView { DesktopGestureView() }
+    func updateUIView(_ view: DesktopGestureView, context: Context) {
+        if view.trackpadMode != trackpadMode || view.remoteSize != remoteSize || !enabled {
+            view.releaseButton()
+        }
+        view.remoteSize = remoteSize
+        view.trackpadMode = trackpadMode
+        view.send = send
+        view.isUserInteractionEnabled = enabled
+    }
+    static func dismantleUIView(_ view: DesktopGestureView, coordinator: ()) { view.releaseButton() }
+}
+
+@MainActor
+private final class DesktopGestureView: UIView, UIGestureRecognizerDelegate {
+    var remoteSize = CGSize.zero
+    var trackpadMode = false
+    var send: ([InputEvent]) -> Void = { _ in }
+    private var cursor: CGPoint?
+    private var dragging = false
+
+    init() {
+        super.init(frame: .zero)
+        backgroundColor = .clear
+        isMultipleTouchEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(click(_:)))
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(click(_:)))
+        doubleTap.numberOfTapsRequired = 2
+        tap.require(toFail: doubleTap)
+        let rightTap = UITapGestureRecognizer(target: self, action: #selector(click(_:)))
+        rightTap.numberOfTouchesRequired = 2
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePointerPan(_:)))
+        pan.maximumNumberOfTouches = 1
+        let scroll = UIPanGestureRecognizer(target: self, action: #selector(scroll(_:)))
+        scroll.minimumNumberOfTouches = 2
+        scroll.maximumNumberOfTouches = 2
+        let hold = UILongPressGestureRecognizer(target: self, action: #selector(hold(_:)))
+        hold.minimumPressDuration = 0.45
+        hold.allowableMovement = 12
+        for gesture in [tap, doubleTap, rightTap, pan, scroll, hold] {
+            gesture.delegate = self
+            addGestureRecognizer(gesture)
+        }
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        (gestureRecognizer is UILongPressGestureRecognizer && otherGestureRecognizer is UIPanGestureRecognizer && otherGestureRecognizer.numberOfTouches <= 1)
+        || (otherGestureRecognizer is UILongPressGestureRecognizer && gestureRecognizer is UIPanGestureRecognizer && gestureRecognizer.numberOfTouches <= 1)
+    }
+
+    private func point(at local: CGPoint) -> InputPoint? {
+        guard remoteSize.width > 0, remoteSize.height > 0 else { return nil }
+        if !trackpadMode {
+            guard let mapped = RemoteDisplayCoordinateMapper(remoteSize: remoteSize, surfaceSize: bounds.size).map(local) else { return nil }
+            cursor = mapped.remote
+        } else if cursor == nil {
+            cursor = CGPoint(x: remoteSize.width / 2, y: remoteSize.height / 2)
+        }
+        guard let cursor else { return nil }
+        return InputPoint(x: Double(min(max(0, cursor.x), remoteSize.width - 1)),
+                          y: Double(min(max(0, cursor.y), remoteSize.height - 1)))
+    }
+    private var timestamp: UInt64 { UInt64(Date().timeIntervalSince1970 * 1000) }
+
+    @objc private func click(_ gesture: UITapGestureRecognizer) {
+        guard gesture.state == .ended, let point = point(at: gesture.location(in: self)) else { return }
+        let button: MouseButton = gesture.numberOfTouchesRequired == 2 ? .right : .left
+        var events = [InputEvent(kind: .pointerMove, timestamp: timestamp, location: point)]
+        for count in 1...gesture.numberOfTapsRequired {
+            events.append(InputEvent(kind: .pointerButton, timestamp: timestamp, location: point,
+                                     button: button, pressed: true, clickCount: count))
+            events.append(InputEvent(kind: .pointerButton, timestamp: timestamp, location: point,
+                                     button: button, pressed: false, clickCount: count))
+        }
+        send(events)
+    }
+    @objc private func handlePointerPan(_ gesture: UIPanGestureRecognizer) {
+        if trackpadMode {
+            _ = point(at: gesture.location(in: self))
+            let delta = gesture.translation(in: self)
+            let previous = cursor ?? .zero
+            cursor = CGPoint(x: min(max(0, previous.x + delta.x * 1.5), remoteSize.width - 1),
+                             y: min(max(0, previous.y + delta.y * 1.5), remoteSize.height - 1))
+            gesture.setTranslation(.zero, in: self)
+        }
+        if let point = point(at: gesture.location(in: self)) {
+            send([InputEvent(kind: .pointerMove, timestamp: timestamp, location: point,
+                             button: dragging ? .left : nil, pressed: dragging)])
+        }
+        if gesture.state == .cancelled || gesture.state == .ended || gesture.state == .failed { releaseButton() }
+    }
+    @objc private func hold(_ gesture: UILongPressGestureRecognizer) {
+        if gesture.state == .began, let point = point(at: gesture.location(in: self)) {
+            dragging = true
+            send([InputEvent(kind: .pointerMove, timestamp: timestamp, location: point),
+                  InputEvent(kind: .pointerButton, timestamp: timestamp, location: point, button: .left, pressed: true)])
+        } else if gesture.state == .changed, !trackpadMode, let point = point(at: gesture.location(in: self)) {
+            send([InputEvent(kind: .pointerMove, timestamp: timestamp, location: point, button: .left, pressed: true)])
+        } else if gesture.state == .ended || gesture.state == .cancelled || gesture.state == .failed { releaseButton() }
+    }
+    @objc private func scroll(_ gesture: UIPanGestureRecognizer) {
+        releaseButton()
+        guard gesture.state == .changed, let point = point(at: gesture.location(in: self)) else { return }
+        let delta = gesture.translation(in: self)
+        gesture.setTranslation(.zero, in: self)
+        send([InputEvent(kind: .scroll, timestamp: timestamp, location: point,
+                         scrollDelta: InputPoint(x: Double(delta.x), y: Double(delta.y)))])
+    }
+    func releaseButton() {
+        guard dragging else { return }
+        dragging = false
+        if let cursor {
+            send([InputEvent(kind: .pointerButton, timestamp: timestamp,
+                             location: InputPoint(x: Double(cursor.x), y: Double(cursor.y)), button: .left, pressed: false)])
+        }
+    }
+}
+#endif
+
+@MainActor
+private struct LiveRemoteVideoSurface: View {
+    @ObservedObject var client: NativeWebRTCClient
+    var body: some View {
+        NativeWebRTCVideoSurface(videoTrack: client.remoteVideoTrack)
+            .overlay {
+                #if canImport(WebRTC) && !SWIFT_PACKAGE
+                if !client.hasReceivedFrame {
+                    VStack(spacing: 12) {
+                        if client.connectionState != .failed { ProgressView().tint(.cyan) }
+                        Text(client.failureMessage ?? "Waiting for Mac video…")
+                            .font(.callout).multilineTextAlignment(.center)
+                    }
+                    .foregroundStyle(.white).padding(24)
+                    .background(Color.black.opacity(0.8), in: RoundedRectangle(cornerRadius: 16))
+                    .allowsHitTesting(false)
+                }
+                #endif
+            }
     }
 }

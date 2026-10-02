@@ -27,52 +27,72 @@ public struct MACLandDiscoveredHost: Identifiable, Equatable, Sendable {
     public let id: String
     public let name: String
     public let endpointDescription: String
+    public let hostID: UUID?
+    public let certificateSHA256: String?
 
-    public init(id: String, name: String, endpointDescription: String) {
-        self.id = id
-        self.name = name
-        self.endpointDescription = endpointDescription
+    public init(id: String, name: String, endpointDescription: String, hostID: UUID? = nil, certificateSHA256: String? = nil) {
+        self.id = id; self.name = name; self.endpointDescription = endpointDescription
+        self.hostID = hostID; self.certificateSHA256 = certificateSHA256
+    }
+
+    public func pairingPayload(code: String) throws -> PairingQRCodePayload {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count == 6, trimmed.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }) else {
+            throw MACLandControlClientError.invalidPairingCode
+        }
+        guard let hostID, let pin = certificateSHA256, pin.count == 64,
+              pin.allSatisfy({ $0.isHexDigit }), endpointDescription.hasPrefix("wss://") else {
+            throw MACLandControlClientError.hostNotReady
+        }
+        return PairingQRCodePayload(hostIdentity: DeviceIdentityMetadata(deviceID: hostID, deviceName: name, platform: .macOS, appVersion: "0.1.0"),
+            endpoint: endpointDescription, pairingCode: trimmed, certificatePinning: CertificatePinningMetadata(certificateSHA256: pin),
+            expiresAt: Date().addingTimeInterval(600), nonce: UUID().uuidString)
     }
 }
 
-/// Bonjour discovery is intentionally separate from the WebSocket client. A
-/// QR payload carries the authoritative hostname, port, and pin; Bonjour only
-/// helps the phone show nearby MACLand hosts before pairing.
 @MainActor
-public final class MACLandBonjourDiscovery: ObservableObject {
+public final class MACLandBonjourDiscovery: NSObject, ObservableObject, @preconcurrency NetServiceBrowserDelegate, @preconcurrency NetServiceDelegate {
     @Published public private(set) var hosts: [MACLandDiscoveredHost] = []
-
-    private var browser: NWBrowser?
-
-    public init() {}
+    @Published public private(set) var lastError: String?
+    private var browser: NetServiceBrowser?
+    private var services: [String: NetService] = [:]
+    public override init() { super.init() }
 
     public func start() {
-        stop()
-        let browser = NWBrowser(
-            for: .bonjour(type: "_macland._tcp", domain: nil),
-            using: NWParameters.tcp
-        )
-        browser.browseResultsChangedHandler = { [weak self] results, _ in
-            let hosts = results.map { result in
-                MACLandDiscoveredHost(
-                    id: result.endpoint.debugDescription,
-                    name: result.endpoint.debugDescription,
-                    endpointDescription: result.endpoint.debugDescription
-                )
-            }
-            Task { @MainActor [weak self] in
-                self?.hosts = hosts.sorted { $0.name < $1.name }
-            }
-        }
-        browser.stateUpdateHandler = { _ in }
-        browser.start(queue: .main)
+        stop(); lastError = nil
+        let browser = NetServiceBrowser(); browser.delegate = self
         self.browser = browser
+        browser.searchForServices(ofType: "_macland._tcp.", inDomain: "local.")
     }
-
     public func stop() {
-        browser?.cancel()
-        browser = nil
-        hosts = []
+        browser?.stop(); browser?.delegate = nil; browser = nil
+        for service in services.values { service.stopMonitoring(); service.stop(); service.delegate = nil }
+        services.removeAll(); hosts = []
+    }
+    public func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+        services[service.name] = service; service.delegate = self; service.startMonitoring(); service.resolve(withTimeout: 8)
+    }
+    public func netServiceBrowser(_ browser: NetServiceBrowser, didRemove service: NetService, moreComing: Bool) {
+        services.removeValue(forKey: service.name)?.stopMonitoring(); service.stop(); hosts.removeAll { $0.id == service.name }
+    }
+    public func netServiceBrowser(_ browser: NetServiceBrowser, didNotSearch errorDict: [String: NSNumber]) {
+        lastError = "Mac discovery is unavailable. Allow Local Network access for MACLand in iPhone Settings and check that both devices use the same Wi-Fi."
+    }
+    public func netServiceDidResolveAddress(_ sender: NetService) {
+        guard services[sender.name] === sender, let hostname = sender.hostName, sender.port > 0 else { return }
+        let record = sender.txtRecordData().map(NetService.dictionary(fromTXTRecord:)) ?? [:]
+        var url = URLComponents(); url.scheme = "wss"; url.host = hostname; url.port = sender.port
+        guard let endpoint = url.url?.absoluteString else { return }
+        let host = MACLandDiscoveredHost(id: sender.name, name: sender.name, endpointDescription: endpoint,
+            hostID: record["host-id"].flatMap { String(data: $0, encoding: .utf8) }.flatMap(UUID.init(uuidString:)),
+            certificateSHA256: record["cert-sha256"].flatMap { String(data: $0, encoding: .utf8) })
+        hosts.removeAll { $0.id == host.id }; hosts.append(host); hosts.sort { $0.name < $1.name }
+    }
+    public func netService(_ sender: NetService, didUpdateTXTRecord data: Data) {
+        netServiceDidResolveAddress(sender)
+    }
+    public func netService(_ sender: NetService, didNotResolve errorDict: [String: NSNumber]) {
+        lastError = "Could not find the Mac's network address. Check Wi-Fi and scan again."
     }
 }
 
@@ -88,6 +108,7 @@ public final class MACLandControlClient: NSObject, ObservableObject {
     public let clientName: String
     public let webRTCClient: NativeWebRTCClient
 
+    public var onInputError: ((String) -> Void)?
     public var onStateChange: ((MACLandControlClientState) -> Void)?
     public var onDisplayState: ((DisplayStatePayload) -> Void)?
     public var onSessionState: ((SessionStatePayload) -> Void)?
@@ -97,6 +118,7 @@ public final class MACLandControlClient: NSObject, ObservableObject {
     private var receiveTask: Task<Void, Never>?
     private var connectionTimeoutTask: Task<Void, Never>?
     private var pairingPayload: PairingQRCodePayload?
+    private var pendingDiscoveredHostID: String?
     private var currentSessionID: UUID?
     private var nextSequence: UInt64 = 1
     private var reconnectTask: Task<Void, Never>?
@@ -119,12 +141,23 @@ public final class MACLandControlClient: NSObject, ObservableObject {
         configureWebRTCICEForwarding()
     }
 
+    public func connect(to host: MACLandDiscoveredHost, code: String) throws {
+        let payload = try host.pairingPayload(code: code)
+        let key = "macland.trusted-host-pin." + host.id
+        if let known = UserDefaults.standard.string(forKey: key), known != host.certificateSHA256 {
+            throw MACLandControlClientError.certificateChanged
+        }
+        try connect(using: payload)
+        pendingDiscoveredHostID = host.id
+    }
+
     public func connect(using pairingPayload: PairingQRCodePayload) throws {
         guard let url = Self.webSocketURL(from: pairingPayload.endpoint) else {
             throw MACLandControlClientError.invalidEndpoint(pairingPayload.endpoint)
         }
 
         disconnect(clearPairing: false)
+        pendingDiscoveredHostID = pairingPayload.hostIdentity.deviceName
         self.pairingPayload = pairingPayload
         pairingCode = pairingPayload.pairingCode
         certificatePinStore.set(pairingPayload.certificatePinning.certificateSHA256.lowercased())
@@ -274,13 +307,14 @@ public final class MACLandControlClient: NSObject, ObservableObject {
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                fail(error.localizedDescription)
-                reconnect()
+                let shouldReconnect = state == .connected || state == .reconnecting
+                fail(connectionFailureMessage(error))
+                if shouldReconnect && certificatePinStore.validationFailure == nil { reconnect() }
             }
         }
     }
 
-    private func handle(data: Data) {
+    func handle(data: Data) {
         do {
             let header = try MACLandJSON.makeDecoder().decode(ControlMessageHeader.self, from: data)
             switch header.kind {
@@ -292,6 +326,9 @@ public final class MACLandControlClient: NSObject, ObservableObject {
                 guard envelope.payload.accepted else {
                     fail(envelope.payload.reason ?? "The host rejected pairing.")
                     return
+                }
+                if let host = pendingDiscoveredHostID, let pin = pairingPayload?.certificatePinning.certificateSHA256 {
+                    UserDefaults.standard.set(pin, forKey: "macland.trusted-host-pin." + host)
                 }
                 beginSession(hostID: envelope.payload.hostID)
             case .sessionState:
@@ -314,7 +351,11 @@ public final class MACLandControlClient: NSObject, ObservableObject {
                 if envelope.payload.kind == .pong { return }
             case .error:
                 let envelope = try ControlEnvelope<ErrorPayload>.decode(from: data, expectedKind: .error)
-                fail(envelope.payload.message)
+                if envelope.payload.details?["capability"] == "input" {
+                    onInputError?(envelope.payload.message)
+                } else {
+                    fail(envelope.payload.message)
+                }
             default:
                 break
             }
@@ -403,9 +444,19 @@ public final class MACLandControlClient: NSObject, ObservableObject {
         webSocketTask.send(.data(data)) { [weak self] error in
             guard let error else { return }
             Task { @MainActor [weak self] in
-                self?.fail(error.localizedDescription)
+                guard let self, webSocketTask === self.webSocketTask else { return }
+                self.fail(self.connectionFailureMessage(error))
             }
         }
+    }
+
+    private func connectionFailureMessage(_ error: Error) -> String {
+        if let validationFailure = certificatePinStore.validationFailure { return validationFailure }
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+            return "The secure connection was cancelled. Scan for your Mac again, check its current code, and retry."
+        }
+        return error.localizedDescription
     }
 
     private func fail(_ message: String) {
@@ -429,11 +480,17 @@ public final class MACLandControlClient: NSObject, ObservableObject {
 }
 
 public enum MACLandControlClientError: LocalizedError, Equatable {
+    case invalidPairingCode
+    case hostNotReady
+    case certificateChanged
     case invalidEndpoint(String)
     case notConnected
 
     public var errorDescription: String? {
         switch self {
+        case .invalidPairingCode: "Enter the six-digit pairing code shown on your Mac."
+        case .hostNotReady: "Restart the updated MACLand host, then scan again."
+        case .certificateChanged: "This Mac's security certificate has changed. Use pairing data from the Mac to verify it again."
         case let .invalidEndpoint(endpoint): "The pairing endpoint is invalid: " + endpoint
         case .notConnected: "The secure MACLand control channel is not connected."
         }
@@ -452,7 +509,7 @@ extension MACLandControlClient: URLSessionWebSocketDelegate {
             didOpenWithProtocol protocol: String?
         ) {
             Task { @MainActor [weak self] in
-                guard let self else { return }
+                guard let self, webSocketTask === self.webSocketTask else { return }
                 connectionTimeoutTask?.cancel()
                 connectionTimeoutTask = nil
                 setState(.pairing)
@@ -468,7 +525,7 @@ extension MACLandControlClient: URLSessionWebSocketDelegate {
         reason: Data?
         ) {
             Task { @MainActor [weak self] in
-            guard let self, webSocketTask === self.webSocketTask else { return }
+            guard let self, webSocketTask === self.webSocketTask, state != .idle, state != .failed else { return }
             setState(.reconnecting)
             reconnect()
         }
@@ -483,8 +540,8 @@ extension MACLandControlClient: URLSessionTaskDelegate {
     ) {
         Task { @MainActor [weak self] in
             guard let self, task === self.webSocketTask else { return }
-            guard state != .idle else { return }
-            fail(error?.localizedDescription ?? "The secure connection to the Mac host closed before pairing completed.")
+            guard state != .idle, state != .failed else { return }
+            fail(error.map(connectionFailureMessage) ?? "The secure connection to the Mac host closed before pairing completed.")
         }
     }
 }
@@ -495,10 +552,14 @@ extension MACLandControlClient: URLSessionDelegate {
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
-        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-              let trust = challenge.protectionSpace.serverTrust,
-              let certificate = SecTrustGetCertificateAtIndex(trust, 0),
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        guard let trust = challenge.protectionSpace.serverTrust,
+              let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate], let certificate = chain.first,
               let expected = self.certificatePinStore.value else {
+            self.certificatePinStore.recordFailure("The Mac did not provide a verifiable certificate. Scan for the updated host again.")
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
@@ -506,6 +567,7 @@ extension MACLandControlClient: URLSessionDelegate {
         let digest = SHA256.hash(data: SecCertificateCopyData(certificate) as Data)
         let actual = digest.map { String(format: "%02x", $0) }.joined()
         guard actual == expected else {
+            self.certificatePinStore.recordFailure("The Mac's certificate does not match its pairing details. Scan again instead of using old pairing data.")
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
@@ -516,6 +578,14 @@ extension MACLandControlClient: URLSessionDelegate {
 private final class CertificatePinStore: @unchecked Sendable {
     private let lock = NSLock()
     private var pin: String?
+    private var failure: String?
+
+    var validationFailure: String? {
+        lock.lock(); defer { lock.unlock() }; return failure
+    }
+    func recordFailure(_ message: String) {
+        lock.lock(); defer { lock.unlock() }; failure = message
+    }
 
     var value: String? {
         lock.lock()
@@ -526,6 +596,7 @@ private final class CertificatePinStore: @unchecked Sendable {
     func set(_ pin: String?) {
         lock.lock()
         self.pin = pin
+        self.failure = nil
         lock.unlock()
     }
 }

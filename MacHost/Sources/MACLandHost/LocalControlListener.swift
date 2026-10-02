@@ -301,11 +301,12 @@ final class LocalControlListener: @unchecked Sendable {
     private let pairingApproval: PairingApprovalStore
     private let onSessionStart: ((SessionStartPayload) -> Void)?
     private let onMediaAnswer: ((MediaAnswerPayload) -> Void)?
+    private let onMediaICE: ((MediaICEPayload) -> Void)?
     private let onAppLaunch: ((ApplicationCommandPayload) -> Void)?
     private let onAppFocus: ((ApplicationCommandPayload) -> Void)?
     private let onAppClose: ((ApplicationCommandPayload) -> Void)?
     private let onInputBatch: ((InputBatchPayload) -> Void)?
-    private let appsListProvider: (() -> AppsListPayload)?
+    private let appsListProvider: (@MainActor @Sendable () -> AppsListPayload)?
     private var trustedClientIDs = Set<UUID>()
     private var revokedClientIDs = Set<UUID>()
     private var listener: NWListener?
@@ -314,6 +315,7 @@ final class LocalControlListener: @unchecked Sendable {
 
     init(
         hostName: String,
+        port: NWEndpoint.Port = LocalControlListener.controlPort,
         certificatePinningMetadata: CertificatePinningMetadata? = nil,
         tlsIdentityFactory: @escaping TLSIdentityFactory = LocalControlListener.unconfiguredTLSIdentity,
         hostID: UUID = UUID(),
@@ -324,11 +326,12 @@ final class LocalControlListener: @unchecked Sendable {
         pairingApproval: PairingApprovalStore = PairingApprovalStore(),
         onSessionStart: ((SessionStartPayload) -> Void)? = nil,
         onMediaAnswer: ((MediaAnswerPayload) -> Void)? = nil,
+        onMediaICE: ((MediaICEPayload) -> Void)? = nil,
         onAppLaunch: ((ApplicationCommandPayload) -> Void)? = nil,
         onAppFocus: ((ApplicationCommandPayload) -> Void)? = nil,
         onAppClose: ((ApplicationCommandPayload) -> Void)? = nil,
         onInputBatch: ((InputBatchPayload) -> Void)? = nil,
-        appsListProvider: (() -> AppsListPayload)? = nil
+        appsListProvider: (@MainActor @Sendable () -> AppsListPayload)? = nil
     ) throws {
         guard !hostName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw LocalControlListenerError.invalidHostName
@@ -341,6 +344,7 @@ final class LocalControlListener: @unchecked Sendable {
         self.pairingApproval = pairingApproval
         self.onSessionStart = onSessionStart
         self.onMediaAnswer = onMediaAnswer
+        self.onMediaICE = onMediaICE
         self.onAppLaunch = onAppLaunch
         self.onAppFocus = onAppFocus
         self.onAppClose = onAppClose
@@ -378,12 +382,17 @@ final class LocalControlListener: @unchecked Sendable {
         let parameters = NWParameters(tls: tlsOptions, tcp: NWProtocolTCP.Options())
         parameters.defaultProtocolStack.applicationProtocols.insert(NWProtocolWebSocket.Options(), at: 0)
 
-        let listener = try NWListener(using: parameters, on: Self.controlPort)
+        let listener = try NWListener(using: parameters, on: port)
         listener.service = NWListener.Service(
             name: hostName,
             type: "_macland._tcp",
             domain: nil,
-            txtRecord: nil
+            txtRecord: certificatePinningMetadata.map { pin in
+                NetService.data(fromTXTRecord: [
+                    "host-id": Data(hostID.uuidString.utf8),
+                    "cert-sha256": Data((pin.certificateSHA256 ?? "").utf8)
+                ])
+            }
         )
         self.listener = listener
     }
@@ -437,9 +446,12 @@ final class LocalControlListener: @unchecked Sendable {
         payload: Payload,
         requestID: UUID? = nil
     ) {
-        for session in sessions.values {
-            guard case .established = session.state else { continue }
-            try? session.send(kind: kind, payload: payload, requestID: requestID)
+        queue.async { [weak self] in
+            guard let self else { return }
+            for session in self.sessions.values {
+                guard case .established = session.state else { continue }
+                try? session.send(kind: kind, payload: payload, requestID: requestID)
+            }
         }
     }
 
@@ -595,6 +607,23 @@ final class LocalControlListener: @unchecked Sendable {
         )
     }
 
+    // Used by both initial session setup and subsequent app-list requests.
+    func fetchApplications() async -> AppsListPayload? {
+        await appsListProvider?()
+    }
+
+    private func sendApplications(to session: ControlWebSocketSession, requestID: UUID? = nil) {
+        Task { [weak self, weak session] in
+            guard let self, let payload = await self.fetchApplications() else { return }
+            self.queue.async { [weak self, weak session] in
+                guard let self, let session,
+                      self.sessions[session.id] === session,
+                      case .established = session.state else { return }
+                try? session.send(kind: .appsList, payload: payload, requestID: requestID)
+            }
+        }
+    }
+
     private func handleSessionStart(data: Data, session: ControlWebSocketSession) throws {
         let envelope = try ControlEnvelope<SessionStartPayload>.decode(from: data, expectedKind: .sessionStart)
         guard case .established = session.state else { throw ControlTransportError.pairingRequired }
@@ -608,9 +637,7 @@ final class LocalControlListener: @unchecked Sendable {
             ),
             requestID: envelope.id
         )
-        if let appsList = appsListProvider?() {
-            try session.send(kind: .appsList, payload: appsList, requestID: envelope.id)
-        }
+        sendApplications(to: session, requestID: envelope.id)
     }
 
     private func handleMediaAnswer(data: Data, session: ControlWebSocketSession) throws {
@@ -623,14 +650,17 @@ final class LocalControlListener: @unchecked Sendable {
     private func handleMediaICE(data: Data, session: ControlWebSocketSession) throws {
         let envelope = try ControlEnvelope<MediaICEPayload>.decode(from: data, expectedKind: .mediaICE)
         guard case .established = session.state else { throw ControlTransportError.pairingRequired }
-        Self.logger.debug("Received WebRTC ICE candidate for \(envelope.payload.sessionID.uuidString, privacy: .public)")
+        forwardMediaICE(envelope.payload)
+    }
+
+    func forwardMediaICE(_ payload: MediaICEPayload) {
+        onMediaICE?(payload)
+        Self.logger.debug("Received WebRTC ICE candidate for \(payload.sessionID.uuidString, privacy: .public)")
     }
 
     private func handleAppsList(session: ControlWebSocketSession) throws {
         guard case .established = session.state else { throw ControlTransportError.pairingRequired }
-        if let appsList = appsListProvider?() {
-            try session.send(kind: .appsList, payload: appsList)
-        }
+        sendApplications(to: session)
     }
 
     private func handleApplicationCommand(

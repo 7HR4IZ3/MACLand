@@ -75,6 +75,7 @@ public final class WorkspaceState: ObservableObject {
     @Published public private(set) var activeWindowID: WorkspaceWindow.ID?
     @Published public private(set) var connectionState: ConnectionState = .disconnected
     @Published public private(set) var connectionError: String?
+    @Published public private(set) var inputError: String?
     @Published public private(set) var mediaState = RemoteMediaState()
     @Published public var isLauncherPresented = false
     @Published public var isTaskSwitcherPresented = false
@@ -92,6 +93,7 @@ public final class WorkspaceState: ObservableObject {
         activeWindowID = initialWindows.first?.id
         mediaState = RemoteMediaState(webRTCClient: controlClient.webRTCClient)
 
+        controlClient.onInputError = { [weak self] message in self?.inputError = message }
         controlClient.onStateChange = { [weak self] state in
             guard let self else { return }
             switch state {
@@ -234,6 +236,18 @@ public final class WorkspaceState: ObservableObject {
         }
     }
 
+    public func connect(to host: MACLandDiscoveredHost, code: String) {
+        connectionError = nil
+        do {
+            try controlClient.connect(to: host, code: code)
+            connectionState = .connecting
+            mediaState.beginNegotiation()
+        } catch {
+            connectionError = error.localizedDescription
+            connectionState = .pairing(code: "")
+        }
+    }
+
     public func connectFromPairingJSON() {
         guard let data = pairingPayloadJSON.data(using: .utf8) else {
             connectionError = "Pairing data is not valid UTF-8."
@@ -268,6 +282,13 @@ public final class WorkspaceState: ObservableObject {
             location: InputPoint(x: touch.remote.x, y: touch.remote.y)
         )
         try? controlClient.sendInput(events: [event])
+    }
+
+    public func sendDesktopInput(_ events: [InputEvent]) {
+        guard connectionState.isConnected else { return }
+        inputError = nil
+        do { try controlClient.sendInput(events: events) }
+        catch { connectionError = error.localizedDescription }
     }
 
     public func disconnect() {

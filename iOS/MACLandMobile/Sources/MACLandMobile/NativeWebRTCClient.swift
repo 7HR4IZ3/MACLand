@@ -10,6 +10,10 @@ public final class NativeWebRTCClient: NSObject, ObservableObject {
     @Published public private(set) var remoteVideoTrack: RTCVideoTrack?
     @Published public private(set) var connectionState: RemoteMediaConnectionState = .idle
 
+    @Published public private(set) var hasReceivedFrame = false
+    @Published public private(set) var failureMessage: String?
+    private var frameObserver: FirstRemoteFrameObserver?
+
     public var onLocalICECandidate: ((RTCIceCandidate) -> Void)?
     public var onConnectionFailure: ((String) -> Void)?
 
@@ -19,6 +23,8 @@ public final class NativeWebRTCClient: NSObject, ObservableObject {
 
     private let factory: RTCPeerConnectionFactory
     private var peerConnection: RTCPeerConnection?
+    private var pendingRemoteICE: [RTCIceCandidate] = []
+    private var remoteOfferApplied = false
 
     public override init() {
         _ = Self.sslInitialized
@@ -65,6 +71,10 @@ public final class NativeWebRTCClient: NSObject, ObservableObject {
             RTCSessionDescription(type: .offer, sdp: sdp),
             on: peerConnection
         )
+        remoteOfferApplied = true
+        let candidates = pendingRemoteICE
+        pendingRemoteICE.removeAll()
+        for candidate in candidates { try await addCandidate(candidate, on: peerConnection) }
         let answer = try await createAnswer(on: peerConnection)
         try await setLocalDescription(answer, on: peerConnection)
         connectionState = .negotiating
@@ -77,14 +87,15 @@ public final class NativeWebRTCClient: NSObject, ObservableObject {
         sdpMid: String?
     )
     async throws {
-        guard let peerConnection else {
-            throw NativeWebRTCClientError.peerConnectionUnavailable
+        let candidate = RTCIceCandidate(sdp: sdp, sdpMLineIndex: sdpMLineIndex, sdpMid: sdpMid)
+        guard remoteOfferApplied, let peerConnection else {
+            pendingRemoteICE.append(candidate)
+            return
         }
-        let candidate = RTCIceCandidate(
-            sdp: sdp,
-            sdpMLineIndex: sdpMLineIndex,
-            sdpMid: sdpMid
-        )
+        try await addCandidate(candidate, on: peerConnection)
+    }
+
+    private func addCandidate(_ candidate: RTCIceCandidate, on peerConnection: RTCPeerConnection) async throws {
         try await withCheckedThrowingContinuation {
             (continuation: CheckedContinuation<Void, Error>) in
             peerConnection.add(candidate) { error in
@@ -98,8 +109,14 @@ public final class NativeWebRTCClient: NSObject, ObservableObject {
     }
 
     public func stop() {
+        if let frameObserver { remoteVideoTrack?.remove(frameObserver) }
+        frameObserver = nil
+        hasReceivedFrame = false
+        failureMessage = nil
         peerConnection?.close()
         peerConnection = nil
+        pendingRemoteICE.removeAll()
+        remoteOfferApplied = false
         remoteVideoTrack = nil
         connectionState = .idle
     }
@@ -194,7 +211,8 @@ extension NativeWebRTCClient: RTCPeerConnectionDelegate {
                 connectionState = .connected
             case .failed:
                 connectionState = .failed
-                onConnectionFailure?("The iOS WebRTC peer connection failed.")
+                failureMessage = "Video could not connect over Wi-Fi. Reconnect to the Mac and try again."
+                onConnectionFailure?(failureMessage!)
             case .disconnected:
                 connectionState = .reconnecting
             case .closed:
@@ -208,7 +226,14 @@ extension NativeWebRTCClient: RTCPeerConnectionDelegate {
     nonisolated public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
         guard let videoTrack = rtpReceiver.track as? RTCVideoTrack else { return }
         Task { @MainActor [weak self] in
-            self?.remoteVideoTrack = videoTrack
+            guard let self else { return }
+            if let frameObserver { remoteVideoTrack?.remove(frameObserver) }
+            let observer = FirstRemoteFrameObserver { [weak self] in
+                Task { @MainActor in self?.hasReceivedFrame = true }
+            }
+            frameObserver = observer
+            videoTrack.add(observer)
+            remoteVideoTrack = videoTrack
         }
     }
 
@@ -221,6 +246,22 @@ extension NativeWebRTCClient: RTCPeerConnectionDelegate {
     }
 
 }
+private final class FirstRemoteFrameObserver: NSObject, RTCVideoRenderer, @unchecked Sendable {
+    private let lock = NSLock()
+    private var received = false
+    private let onFirstFrame: @Sendable () -> Void
+    init(onFirstFrame: @escaping @Sendable () -> Void) { self.onFirstFrame = onFirstFrame }
+    func setSize(_ size: CGSize) {}
+    func renderFrame(_ frame: RTCVideoFrame?) {
+        guard frame != nil else { return }
+        lock.lock()
+        let first = !received
+        received = true
+        lock.unlock()
+        if first { onFirstFrame() }
+    }
+}
+
 #else
 @MainActor
 public final class NativeWebRTCClient: ObservableObject {
